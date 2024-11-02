@@ -1,50 +1,27 @@
-# React + TypeScript + Vite
+# Turn-Based Game: Battleship
+In the game of Battleship, two players face off in a strategic guessing game. Each player has a grid where they can place a variety of battleships anywhere. The ships come in sizes of 1x2 to 1x6 and the locations of the opposing ships are hidden. Each player takes turns guessing the location of a ship by listing grid coordinates i.e. A6. The other player will then respond with if it was a hit or not and the player will mark their guess accordingly. Once all the boat coordinated have been revealed, the game is over and the last player remaining wins. 
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Tech Stack**
+- React
+- PHP
+- MySQL
 
-Currently, two official plugins are available:
+## Setup
+*Prerequisites*
+- [XAMPP](https://www.apachefriends.org/download.html) (Only Apache & MySQL modules needed)
+- PHP set in PATH environment variables
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+*How to Run*
+- Install node modules: `npm i`
+- Run npm script: `npm run full-dev`
+- Start Apache & SQL using XAMPP:
+  - Open the XAMPP Control Panel
+  - Press start on Apache
+  - Press start on MySQL
+- Populate Database:
+  - Go to [phpmyadmin](http://localhost/phpmyadmin/)
+  - Click on the 'SQL' tab
+  - Copy and paste the contents from `./database/setup.sql` into the textbox
+  - Press 'Go'
+- Navigate to the [homepage](http://localhost:5173/)!
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
