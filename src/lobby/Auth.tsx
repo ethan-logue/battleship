@@ -44,10 +44,19 @@ const Auth = () => {
                     <h2 className='auth-heading'>{isRegister ? 'Register' : 'Login Portal'}</h2>
                     <form className='auth-form' onSubmit={handleSubmit}>
                         {isRegister && (
-                            <input className='auth-input' type="text" name="username" placeholder="Username" onChange={handleInputChange} />
+                            <div className='auth-form-group'>
+                                <label className='auth-label' htmlFor="username">Username</label>
+                                <input className='auth-input' type="text" name="username" onChange={handleInputChange} />
+                            </div>
                         )}
-                        <input className='auth-input' type="email" name="email" placeholder="Email" onChange={handleInputChange} />
-                        <input className='auth-input' type="password" name="password" placeholder="Password" onChange={handleInputChange} />
+                        <div className='auth-form-group'>
+                            <label className='auth-label' htmlFor="email">Email</label>
+                            <input className='auth-input' type="email" name="email" onChange={handleInputChange} />
+                        </div>
+                        <div className='auth-form-group'>
+                            <label className='auth-label' htmlFor="password">Password</label>
+                            <input className='auth-input' type="password" name="password" onChange={handleInputChange} />
+                        </div>
                         <div className='auth-btns'>
                             <button className='auth-toggle' onClick={toggleForm}>
                                 {isRegister ? 'Returning User? Login' : 'New User? Register Here'}
