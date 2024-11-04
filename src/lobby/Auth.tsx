@@ -40,22 +40,22 @@ const Auth = () => {
         <div className='auth-wrapper'>
             <div className='auth-container'>
                 <h1 className='auth-title'>BATTLESHIP</h1>
-                <div className='auth-body'>
+                <div className={`auth-body ${isRegister ? 'grow' : ''}`}>
                     <h2 className='auth-heading'>{isRegister ? 'Register' : 'Login Portal'}</h2>
                     <form className='auth-form' onSubmit={handleSubmit}>
                         {isRegister && (
                             <div className='auth-form-group'>
-                                <label className='auth-label' htmlFor="username">Username</label>
                                 <input className='auth-input' type="text" name="username" onChange={handleInputChange} />
+                                <label className='auth-label' htmlFor="username">Username</label>
                             </div>
                         )}
                         <div className='auth-form-group'>
-                            <label className='auth-label' htmlFor="email">Email</label>
                             <input className='auth-input' type="email" name="email" onChange={handleInputChange} />
+                            <label className='auth-label' htmlFor="email">Email</label>
                         </div>
                         <div className='auth-form-group'>
-                            <label className='auth-label' htmlFor="password">Password</label>
                             <input className='auth-input' type="password" name="password" onChange={handleInputChange} />
+                            <label className='auth-label' htmlFor="password">Password</label>
                         </div>
                         <div className='auth-btns'>
                             <button className='auth-toggle' onClick={toggleForm}>

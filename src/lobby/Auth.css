@@ -5,24 +5,21 @@
     width: 100vw;
     background-image: url('../assets/ocean.png');
     background-position: top center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 .auth-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    height: 70%;
-    width: 100%;
-    max-width: 600px;
-    padding-top: 4vw;
-    /* padding-top: 2%; */
 }
 
 .auth-title {
     font-family: 'Teko', sans-serif;
     font-weight: 700;
     font-size: 20vw;
-    transform: translateY(-25%);
+
     background: #c0cad2;
     background: linear-gradient(0deg, #c0cad200 25%, #508497d4 100%);
     background-clip: text;
@@ -30,7 +27,8 @@
     transform: scaleY(1.25);
     line-height: 1;
     user-select: none;
-    position: relative;
+    position: absolute;
+    top: 3vw;
     z-index: 1;
 }
 
@@ -38,15 +36,24 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: height 0.3s ease-in-out;
+    width: 100%;
+    max-width: 400px;
     background: #12252bd9;
     color: #8db5c3;
     padding: 2rem;
     border-radius: 16px;
-    width: 60%;
-    transition: all 0.3s ease-in-out;
     box-shadow: 0px 5px 12px 0px rgb(0 0 0 / 50%);
-    position: relative;
     z-index: 5;
+
+}
+
+.auth-body.grow {
+    height: auto;
+    transform-origin: top;
 }
 
 .auth-heading {
@@ -93,11 +100,12 @@
     font-size: 1rem;
     color: #508497;
     transition: all 0.3s ease-in-out;
+    pointer-events: none;
 }
 
 .auth-input:focus + .auth-label {
     transform: translateY(0%);
-    top: 5px;
+    top: 8px;
     font-size: 0.8rem;
 }
 
