@@ -70,45 +70,6 @@
     width: 100%;
 }
 
-.auth-form-group {
-    position: relative;
-    width: 100%;
-    margin-bottom: 1rem;
-}
-
-.auth-input {
-    width: 100%;
-    padding: 1.25rem 1.75rem;
-    border-radius: 8px;
-    border: 2px solid #508497;
-    color: #8db5c3;
-    font-size: 1rem;
-    background: none;
-    position: relative;
-    
-    &:focus {
-        outline: none;
-        border-color: #8db5c3;
-    }
-}
-
-.auth-label {
-    position: absolute;
-    top: 50%;
-    left: 1.8rem;
-    transform: translateY(-50%);
-    font-size: 1rem;
-    color: #508497;
-    transition: all 0.3s ease-in-out;
-    pointer-events: none;
-}
-
-.auth-input:focus + .auth-label {
-    transform: translateY(0%);
-    top: 8px;
-    font-size: 0.8rem;
-}
-
 .auth-btns {
     display: flex;
     width: 100%;
