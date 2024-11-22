@@ -13,6 +13,7 @@ const Ship = ({ length, name, cellSize }: ShipProps) => {
   
     const toggleRotation = () => setIsVertical(!isVertical);
   
+    console.log(cellSize);
     
 
     return (
