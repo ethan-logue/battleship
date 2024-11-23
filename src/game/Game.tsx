@@ -1,7 +1,7 @@
 // import { useState, useEffect } from 'react';
 // import io from 'socket.io-client';
 // import Chat from './Chat';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import GameBoard from '../components/GameBoard';
 import './Game.css';
 
@@ -44,21 +44,14 @@ const Game = () => {
 
   const numRowsCols = 10;
   const [cellSize, setCellSize] = useState(calculateCellSize(window.innerWidth));
-  const [ships, setShips] = useState([
-    { name: 'carrier', length: 5, x: 0, y: 0, isVertical: false, placed: false },
-    { name: 'battleship', length: 4, x: 0, y: 0, isVertical: false, placed: false },
-    { name: 'cruiser', length: 3, x: 0, y: 0, isVertical: false, placed: false },
-    { name: 'submarine', length: 3, x: 0, y: 0, isVertical: false, placed: false },
-    { name: 'destroyer', length: 2, x: 0, y: 0, isVertical: false, placed: false },
-  ]);
-
-  const handleShipPlacement = (name: string, x: number, y: number, isVertical: boolean) => {
-    setShips((prevShips) =>
-      prevShips.map((ship) =>
-        ship.name === name ? { ...ship, x, y, isVertical, placed: true } : ship
-      )
-    );
-  };
+  const randomizeShipsRef = useRef<() => void>(() => {});
+  const ships = [
+    { name: 'carrier', length: 5, x: 1, y: 1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
+    { name: 'battleship', length: 4, x: 1, y: 1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
+    { name: 'cruiser', length: 3, x: 1, y: 1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
+    { name: 'submarine', length: 3, x: 1, y: 1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
+    { name: 'destroyer', length: 2, x: 1, y: 1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
+  ];
 
   function calculateCellSize(width: number) {
     const padding = 128;
@@ -81,7 +74,7 @@ const Game = () => {
       <div className='game-header'>
         <div className='pregame-btns'>
           <button>Ready Up</button>
-          <button>Randomize Ships</button>
+          <button onClick={() => randomizeShipsRef.current()}>Randomize Ships</button>
           <button>Reset Ships</button>
         </div>
 
@@ -98,7 +91,6 @@ const Game = () => {
             cellSize={cellSize}
             numRowsCols={numRowsCols}
             ships={ships}
-            onPlaceShip={handleShipPlacement}
           />
         </div>
         <div className='game-board-container'>

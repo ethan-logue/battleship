@@ -61,20 +61,4 @@
     cursor: pointer;
     transition: fill 0.2s;
 }
-
-.board-cell:hover {
-    fill: #cce7ff;
-}
-
-.board-cell:active {
-    fill: #87cefa;
-}
-
-.board-cell.preview-valid {
-    fill: rgba(0, 255, 0, 0.4); /* Light green for valid placement */
-}
-
-.board-cell.preview-invalid {
-    fill: rgba(255, 0, 0, 0.4); /* Light red for invalid placement */
-}
   
