@@ -4,7 +4,6 @@
 import { useEffect, useState } from 'react';
 import GameBoard from '../components/GameBoard';
 import './Game.css';
-import Ship from '../components/Ship';
 
 const Game = () => {
   // const [board, setBoard] = useState(createEmptyBoard());
@@ -45,19 +44,27 @@ const Game = () => {
 
   const numRowsCols = 10;
   const [cellSize, setCellSize] = useState(calculateCellSize(window.innerWidth));
-  const ships = [
-    { name: 'carrier', length: 5, isVertical: false, placed: false },
-    { name: 'battleship', length: 4, isVertical: false, placed: false },
-    { name: 'cruiser', length: 3, isVertical: false, placed: false },
-    { name: 'submarine', length: 3, isVertical: false, placed: false },
-    { name: 'destroyer', length: 2, isVertical: false, placed: false },
-  ];
+  const [ships, setShips] = useState([
+    { name: 'carrier', length: 5, x: 0, y: 0, isVertical: false, placed: false },
+    { name: 'battleship', length: 4, x: 0, y: 0, isVertical: false, placed: false },
+    { name: 'cruiser', length: 3, x: 0, y: 0, isVertical: false, placed: false },
+    { name: 'submarine', length: 3, x: 0, y: 0, isVertical: false, placed: false },
+    { name: 'destroyer', length: 2, x: 0, y: 0, isVertical: false, placed: false },
+  ]);
+
+  const handleShipPlacement = (name: string, x: number, y: number, isVertical: boolean) => {
+    setShips((prevShips) =>
+      prevShips.map((ship) =>
+        ship.name === name ? { ...ship, x, y, isVertical, placed: true } : ship
+      )
+    );
+  };
 
   function calculateCellSize(width: number) {
     const padding = 128;
     const boardWidth = (width - padding) / 2;
     return Math.round(boardWidth / numRowsCols);
-  }
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -90,6 +97,8 @@ const Game = () => {
           <GameBoard
             cellSize={cellSize}
             numRowsCols={numRowsCols}
+            ships={ships}
+            onPlaceShip={handleShipPlacement}
           />
         </div>
         <div className='game-board-container'>
@@ -99,20 +108,6 @@ const Game = () => {
             numRowsCols={numRowsCols}
           />
         </div>
-      </div>
-
-      <div className='ships-container'>
-        {ships.map((ship) => (
-          <div id={`ship-${ship.name}`} className={`ship ${ship.name}-container`}>
-            <Ship
-              key={ship.name}
-              name={ship.name}
-              length={ship.length}
-              cellSize={cellSize}
-              isVertical={ship.isVertical}
-            />
-          </div>
-        ))}
       </div>
       
       {/* <Chat socket={socket} room={gameId} /> */}
