@@ -10,12 +10,13 @@
   display: flex;
   justify-content: center;
   margin-bottom: 16px;
+  text-align: center;
 }
 
 .game-boards {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   gap: 2rem;
   padding: 0 2rem;
   width: 100%;

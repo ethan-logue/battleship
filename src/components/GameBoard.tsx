@@ -30,9 +30,21 @@ const GameBoard = React.memo(({ cellSize, numRowsCols = 10, ships: initialShips 
         return cells;
     };
 
+    const isAdjacent = (cell: string, occupiedCells: Set<string>): boolean => {
+        const [cellX, cellY] = cell.split(',').map(Number);
+        const adjacentCells = [
+            `${cellX - 1},${cellY}`, `${cellX + 1},${cellY}`, // Horizontal neighbors
+            `${cellX},${cellY - 1}`, `${cellX},${cellY + 1}`, // Vertical neighbors
+            `${cellX - 1},${cellY - 1}`, `${cellX + 1},${cellY - 1}`, // Diagonal top
+            `${cellX - 1},${cellY + 1}`, `${cellX + 1},${cellY + 1}`, // Diagonal bottom
+        ];
+        return adjacentCells.some((adjCell) => occupiedCells.has(adjCell));
+    };
+
     const isValidPlacement = (x: number, y: number, length: number, isVertical: boolean, currentShipName: string): boolean => {
         const newCells = getOccupiedCells(x, y, length, isVertical);
     
+        // Get all occupied cells except for the current ship
         const occupiedCells = new Set(
             ships
                 .filter((ship) => ship.name !== currentShipName) // Exclude the current ship
@@ -40,7 +52,7 @@ const GameBoard = React.memo(({ cellSize, numRowsCols = 10, ships: initialShips 
         );
     
         return newCells.every(
-            (cell) => isWithinBounds(cell) && !occupiedCells.has(cell) // Within grid && Not overlapping
+            (cell) => isWithinBounds(cell) && !occupiedCells.has(cell) && !isAdjacent(cell, occupiedCells) // Within grid && Not overlapping && Not adjacent
         );
     };
     
@@ -70,22 +82,34 @@ const GameBoard = React.memo(({ cellSize, numRowsCols = 10, ships: initialShips 
     };
 
     const randomizeShips = () => {
-        const randomShips = ships.map((ship) => {
-          let x, y, isVertical, valid;
-          do {
-            x = Math.floor(Math.random() * cols) + boardMargin;
-            y = Math.floor(Math.random() * rows) + boardMargin;
-            isVertical = Math.random() < 0.5;
-            valid = isValidPlacement(x, y, ship.length, isVertical, ship.name);
-          } while (!valid);
+        const occupiedCells = new Set<string>(); // Track all occupied cells during randomization
     
-          return { ...ship, x, y, isVertical };
+        const randomShips = ships.map((ship) => {
+            let x, y, isVertical, valid;
+    
+            do {
+                x = Math.floor(Math.random() * cols) + boardMargin;
+                y = Math.floor(Math.random() * rows) + boardMargin;
+                isVertical = Math.random() < 0.5;
+    
+                // Check if placement is valid given the current occupied cells
+                const newCells = getOccupiedCells(x, y, ship.length, isVertical);
+                valid = newCells.every(
+                    (cell) => isWithinBounds(cell) && !occupiedCells.has(cell) && !isAdjacent(cell, occupiedCells)
+                );
+            } while (!valid);
+    
+            // Mark the new cells as occupied
+            const newCells = getOccupiedCells(x, y, ship.length, isVertical);
+            newCells.forEach((cell) => occupiedCells.add(cell));
+    
+            return { ...ship, x, y, isVertical };
         });
     
         setShips(randomShips);
     };
 
-    if (randomizeShipsCallback) randomizeShipsCallback.current = randomizeShips;
+    if (randomizeShipsCallback) randomizeShipsCallback.current = randomizeShips; // Expose randomizeShips function to Game.tsx
 
     const gridCells = useMemo(() => {
         const cells = [];

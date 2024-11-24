@@ -42,68 +42,71 @@ const Game = () => {
   //   console.log(`cell-${row}${col}`);
   // };
 
-  const numRowsCols = 10;
-  const [cellSize, setCellSize] = useState(calculateCellSize(window.innerWidth));
-  const randomizeShipsRef = useRef<() => void>(() => {});
-  const ships = [
-    { name: 'carrier', length: 5, x: 1, y: 1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
-    { name: 'battleship', length: 4, x: 1, y: 1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
-    { name: 'cruiser', length: 3, x: 1, y: 1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
-    { name: 'submarine', length: 3, x: 1, y: 1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
-    { name: 'destroyer', length: 2, x: 1, y: 1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
-  ];
+	const numRowsCols = 10;
+	const [cellSize, setCellSize] = useState(calculateCellSize(window.innerWidth));
+	const randomizeShipsRef = useRef<() => void>(() => {});
+	const ships = [
+		{ name: 'carrier', length: 5, x: -1, y: -1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
+		{ name: 'battleship', length: 4, x: -1, y: -1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
+		{ name: 'cruiser', length: 3, x: -1, y: -1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
+		{ name: 'submarine', length: 3, x: -1, y: -1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
+		{ name: 'destroyer', length: 2, x: -1, y: -1, isVertical: true, cellSize: cellSize, onPlaceShip: () => true },
+	];
 
-  function calculateCellSize(width: number) {
-    const padding = 128;
-    const boardWidth = (width - padding) / 2;
-    return Math.round(boardWidth / numRowsCols);
-  };
+	function calculateCellSize(width: number) {
+		const padding = 128;
+		const boardWidth = (width - padding) / 2;
+		return Math.round(boardWidth / numRowsCols);
+	};
 
-  useEffect(() => {
-    const handleResize = () => {
-      setCellSize(calculateCellSize(window.innerWidth));
-    };
+	useEffect(() => {
+		const handleResize = () => {
+			setCellSize(calculateCellSize(window.innerWidth));
+		};
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
 
-  return (
-    <div className="game-container">
+	useEffect(() => {
+		randomizeShipsRef.current();
+	}, [randomizeShipsRef]);
 
-      <div className='game-header'>
-        <div className='pregame-btns'>
-          <button>Ready Up</button>
-          <button onClick={() => randomizeShipsRef.current()}>Randomize Ships</button>
-          <button>Reset Ships</button>
-        </div>
+  	return (
+		<div className="game-container">
 
-        <div className='game-status'>
-          <h2>Game Status</h2>
-          <p id='game-status'>Waiting for player 2...</p>
-        </div>
-      </div>
+			<div className='game-header'>
+				<div className='game-status'>
+					<h2>Game Status</h2>
+					<p id='game-status'>Waiting to Start...</p>
+				</div>
+			</div>
 
-      <div className='game-boards'>
-        <div className='game-board-container'>
-          <h2>Your Board</h2>
-          <GameBoard
-            cellSize={cellSize}
-            numRowsCols={numRowsCols}
-            ships={ships}
-          />
-        </div>
-        <div className='game-board-container'>
-          <h2>Opponent's Board</h2>
-          <GameBoard
-            cellSize={cellSize} 
-            numRowsCols={numRowsCols}
-          />
-        </div>
-      </div>
-      
-      {/* <Chat socket={socket} room={gameId} /> */}
-    </div>
+			<div className='game-boards'>
+				<div className='game-board-container'>
+					<h2>Your Board</h2>
+					<GameBoard
+						cellSize={cellSize}
+						numRowsCols={numRowsCols}
+						ships={ships}
+						randomizeShipsCallback={randomizeShipsRef}
+					/>
+					<div className='pregame-btns'>
+					<button onClick={() => randomizeShipsRef.current()}>Randomize Ships</button>
+					<button>Ready Up</button>
+				</div>
+				</div>
+				<div className='game-board-container'>
+					<h2>Opponent's Board</h2>
+					<GameBoard
+						cellSize={cellSize} 
+						numRowsCols={numRowsCols}
+					/>
+				</div>
+			</div>
+		
+			{/* <Chat socket={socket} room={gameId} /> */}
+		</div>
   );
 };
 
