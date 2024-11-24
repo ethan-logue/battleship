@@ -42,9 +42,12 @@ const Game = () => {
   //   console.log(`cell-${row}${col}`);
   // };
 
+	const hasOpponent = false; // TODO: pass in single player or multiplayer from lobby, false is single player
+
 	const numRowsCols = 10;
 	const [cellSize, setCellSize] = useState(calculateCellSize(window.innerWidth));
-	const randomizeShipsRef = useRef<() => void>(() => {});
+	const playerRandomizeShipsRef = useRef<() => void>(() => {});
+	const opponentRandomizeShipsRef = useRef<() => void>(() => {});
 	const ships = [
 		{ name: 'carrier', length: 5, x: -1, y: -1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
 		{ name: 'battleship', length: 4, x: -1, y: -1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
@@ -69,8 +72,9 @@ const Game = () => {
 	}, []);
 
 	useEffect(() => {
-		randomizeShipsRef.current();
-	}, [randomizeShipsRef]);
+		playerRandomizeShipsRef.current();
+		opponentRandomizeShipsRef.current();
+	});
 
   	return (
 		<div className="game-container">
@@ -89,10 +93,10 @@ const Game = () => {
 						cellSize={cellSize}
 						numRowsCols={numRowsCols}
 						ships={ships}
-						randomizeShipsCallback={randomizeShipsRef}
+						randomizeShipsCallback={playerRandomizeShipsRef}
 					/>
 					<div className='pregame-btns'>
-					<button onClick={() => randomizeShipsRef.current()}>Randomize Ships</button>
+					<button onClick={() => playerRandomizeShipsRef.current()}>Randomize Ships</button>
 					<button>Ready Up</button>
 				</div>
 				</div>
@@ -101,6 +105,8 @@ const Game = () => {
 					<GameBoard
 						cellSize={cellSize} 
 						numRowsCols={numRowsCols}
+						ships={!hasOpponent ? ships : undefined}
+						randomizeShipsCallback={opponentRandomizeShipsRef}
 					/>
 				</div>
 			</div>

@@ -46,8 +46,22 @@ const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip }: ShipPro
             e.preventDefault();
             const newOrientation = !isVertical;
     
-            const valid = onPlaceShip(name, x, y, newOrientation);
-            if (valid) onPlaceShip(name, x, y, newOrientation);
+            const valid = onPlaceShip(name, previewPosition.x, previewPosition.y, newOrientation);
+            if (valid) {
+                onPlaceShip(name, previewPosition.x, previewPosition.y, newOrientation);
+            } else {
+                // Turn ship red for a second and shake
+                const currShip = document.getElementById(name);
+                
+                if (currShip) {
+                    currShip.classList.add('shake');
+                    setIsPreviewValid(false);
+                    setTimeout(() => {
+                        currShip.classList.remove('shake');
+                        setIsPreviewValid(true);
+                    }, 200);
+                }
+            }
         };
 
         if (dragging) {
