@@ -2,7 +2,7 @@
 // import io from 'socket.io-client';
 // import Chat from './Chat';
 import { useEffect, useRef, useState } from 'react';
-import GameBoard from '../components/GameBoard';
+import GameBoard from './GameBoard';
 import './Game.css';
 
 const Game = () => {
@@ -44,10 +44,9 @@ const Game = () => {
 
 	const hasOpponent = false; // TODO: pass in single player or multiplayer from lobby, false is single player
 
+	// Initial game setup
 	const numRowsCols = 10;
 	const [cellSize, setCellSize] = useState(calculateCellSize(window.innerWidth));
-	const playerRandomizeShipsRef = useRef<() => void>(() => {});
-	const opponentRandomizeShipsRef = useRef<() => void>(() => {});
 	const ships = [
 		{ name: 'carrier', length: 5, x: -1, y: -1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
 		{ name: 'battleship', length: 4, x: -1, y: -1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
@@ -55,13 +54,24 @@ const Game = () => {
 		{ name: 'submarine', length: 3, x: -1, y: -1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true },
 		{ name: 'destroyer', length: 2, x: -1, y: -1, isVertical: true, cellSize: cellSize, onPlaceShip: () => true },
 	];
+	const playerRandomizeShipsRef = useRef<() => void>(() => {});
+	const opponentRandomizeShipsRef = useRef<() => void>(() => {});
 
+	// Game state
+	const [playerReady, setPlayerReady] = useState(false);
+	const [opponentReady, setOpponentReady] = useState(false);
+	const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+	const [gameStatus, setGameStatus] = useState('Waiting for both players to ready up...');
+	const [playerGuesses, setPlayerGuesses] = useState(new Map<string, 'hit' | 'miss'>());
+
+	// Calculate cell size based on window width
 	function calculateCellSize(width: number) {
 		const padding = 128;
 		const boardWidth = (width - padding) / 2;
 		return Math.round(boardWidth / numRowsCols);
 	};
 
+	// Resize event listener to adjust cell size
 	useEffect(() => {
 		const handleResize = () => {
 			setCellSize(calculateCellSize(window.innerWidth));
@@ -71,10 +81,32 @@ const Game = () => {
 		return () => window.removeEventListener('resize', handleResize);
 	}, []);
 
+	// Randomize ships on initial render
 	useEffect(() => {
 		playerRandomizeShipsRef.current();
 		opponentRandomizeShipsRef.current();
-	});
+	}, []);
+
+	const handleReadyUp = () => {
+        setPlayerReady(!playerReady);
+        if (!hasOpponent) {
+            setOpponentReady(true); // Single-player mode auto-readies opponent
+        }
+        if (!isPlayerTurn) setIsPlayerTurn(true); // Player goes first in single-player mode
+    };
+
+	const handleCellClick = (row: string, col: number, hit: boolean) => {
+		if (!isPlayerTurn) return;
+		console.log(`Clicked: ${row}${col}`);
+
+		const guess = `${row}${col}`;
+		if (!playerGuesses.has(guess)) {
+			const newGuesses = new Map(playerGuesses);
+			newGuesses.set(guess, hit ? 'hit' : 'miss');
+			setPlayerGuesses(newGuesses);
+			// setIsPlayerTurn(false);
+		}
+    };
 
   	return (
 		<div className="game-container">
@@ -82,7 +114,7 @@ const Game = () => {
 			<div className='game-header'>
 				<div className='game-status'>
 					<h2>Game Status</h2>
-					<p id='game-status'>Waiting to Start...</p>
+					<p id='game-status'>{gameStatus}</p>
 				</div>
 			</div>
 
@@ -95,10 +127,12 @@ const Game = () => {
 						ships={ships}
 						randomizeShipsCallback={playerRandomizeShipsRef}
 					/>
+
 					<div className='pregame-btns'>
-					<button onClick={() => playerRandomizeShipsRef.current()}>Randomize Ships</button>
-					<button>Ready Up</button>
-				</div>
+						<button onClick={() => playerRandomizeShipsRef.current()}>Randomize Ships</button>
+						<button className={`${playerReady ? 'btn-ready' : 'btn-unready'}`} onClick={handleReadyUp}>{playerReady ? 'Ready!' : 'Ready Up'}</button>
+						<button onClick={() => setPlayerGuesses(new Map<string, 'hit' | 'miss'>())}>Reset Guesses</button>
+					</div>
 				</div>
 				<div className='game-board-container'>
 					<h2>Opponent's Board</h2>
@@ -107,6 +141,9 @@ const Game = () => {
 						numRowsCols={numRowsCols}
 						ships={!hasOpponent ? ships : undefined}
 						randomizeShipsCallback={opponentRandomizeShipsRef}
+						onCellClick={handleCellClick}
+						playerGuesses={playerGuesses}
+						classes='opponent-board'
 					/>
 				</div>
 			</div>

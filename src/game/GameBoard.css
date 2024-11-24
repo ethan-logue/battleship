@@ -1,0 +1,41 @@
+.game-board {
+    width: 100%;
+    background-color: #f0f8ff;
+    border: 2px solid #000;
+    border-radius: 8px;
+    user-select: none;
+}
+
+.board-label {
+    font-size: 1rem;
+    font-family: Arial, sans-serif;
+    fill: #000;
+    font-weight: bold;
+}
+
+.board-cell {
+    fill: #ffffff;
+    stroke: #000;
+    stroke-width: 1px;
+    transition: fill 0.2s;
+}
+
+.opponent-board .board-cell:hover {
+    cursor: pointer;
+    fill: #d7e8f7;
+}
+
+.board-cell.hit {
+    fill: #ff0000;
+}
+
+.board-cell.miss {
+    fill: #6394ff;
+}
+
+.opponent-board > .ships * {
+    pointer-events: none;
+    fill: none;
+    stroke: red;
+    stroke-width: 2;
+}

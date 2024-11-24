@@ -39,29 +39,6 @@
     font-size: 0.8rem;
 }
 
-/* GAME BOARD */
-.game-board {
-    width: 100%;
-    background-color: #f0f8ff;
-    border: 2px solid #000;
-    border-radius: 8px;
-}
-
-.board-label {
-    font-size: 1rem;
-    font-family: Arial, sans-serif;
-    fill: #000;
-    font-weight: bold;
-}
-
-.board-cell {
-    fill: #ffffff;
-    stroke: #000;
-    stroke-width: 1px;
-    cursor: pointer;
-    transition: fill 0.2s;
-}
-
 /* SHIP */
 .ship {
     transform-origin: center center;

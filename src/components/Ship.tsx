@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Draggable, { DraggableEvent, DraggableData } from 'react-draggable';
 
 export interface ShipProps {
@@ -16,6 +16,8 @@ const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip }: ShipPro
     const [previewPosition, setPreviewPosition] = useState({ x, y });
     const [isPreviewValid, setIsPreviewValid] = useState(true);
     const [lastValidPosition, setLastValidPosition] = useState({ x, y });
+
+    const nodeRef = useRef(null); // For Draggable, dismisses warning about findDOMNode being deprecated
 
     const handleDragStart = () => {
         setLastValidPosition({ x: x, y: y });
@@ -40,30 +42,39 @@ const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip }: ShipPro
         setDragging(false);
     };
 
-    useEffect(() => {
-        const handleRotation = (e: KeyboardEvent) => {
-            if (!dragging || e.code !== 'KeyR') return;     
-            e.preventDefault();
-            const newOrientation = !isVertical;
-    
-            const valid = onPlaceShip(name, previewPosition.x, previewPosition.y, newOrientation);
-            if (valid) {
-                onPlaceShip(name, previewPosition.x, previewPosition.y, newOrientation);
-            } else {
-                // Turn ship red for a second and shake
-                const currShip = document.getElementById(name);
-                
-                if (currShip) {
-                    currShip.classList.add('shake');
-                    setIsPreviewValid(false);
-                    setTimeout(() => {
-                        currShip.classList.remove('shake');
-                        setIsPreviewValid(true);
-                    }, 200);
-                }
-            }
-        };
+    // Shake the ship if placement is invalid
+    const shakeShip = useCallback(() => {
+        const currShip = document.getElementById(name);
+            
+        if (currShip) {
+            currShip.classList.add('shake');
+            const currValidity = isPreviewValid; // Save current validity
+            
+            setIsPreviewValid(false);
+            setTimeout(() => {
+                currShip.classList.remove('shake');
+                setIsPreviewValid(currValidity);
+            }, 200);
+        }
+    }, [name, isPreviewValid]);
 
+    // Rotate ship on key press
+    const handleRotation = useCallback((e: KeyboardEvent) => {
+        if (!dragging || e.code !== 'KeyR') return;     
+        e.preventDefault();
+        const newOrientation = !isVertical;
+
+        const valid = onPlaceShip(name, previewPosition.x, previewPosition.y, newOrientation);
+        if (valid) {
+            onPlaceShip(name, previewPosition.x, previewPosition.y, newOrientation);
+        } else {
+            // Turn ship red and shake
+            shakeShip();
+        }
+    }, [dragging, isVertical, onPlaceShip, name, previewPosition.x, previewPosition.y, shakeShip]);
+   
+    // Add event listener for rotation
+    useEffect(() => {
         if (dragging) {
             window.addEventListener('keydown', handleRotation);
         } else {
@@ -73,8 +84,9 @@ const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip }: ShipPro
         return () => {
             window.removeEventListener('keydown', handleRotation);
         };
-    }, [dragging, isVertical, name, onPlaceShip, previewPosition.x, previewPosition.y, x, y]);
+    }, [dragging, handleRotation]);
 
+    // Update preview position
     useEffect(() => {
         setPreviewPosition({ x, y });
     }, [x, y]);
@@ -95,6 +107,7 @@ const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip }: ShipPro
                 pointerEvents="none"
             />
             <Draggable
+                nodeRef={nodeRef}
                 position={{
                     x: x * cellSize,
                     y: y * cellSize,
@@ -105,6 +118,7 @@ const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip }: ShipPro
                 onStart={handleDragStart}
             >
                 <rect
+                    ref={nodeRef}
                     className='ship-draggable'
                     width={isVertical ? cellSize : cellSize * length}
                     height={isVertical ? cellSize * length : cellSize}
