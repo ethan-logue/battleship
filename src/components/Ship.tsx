@@ -11,9 +11,10 @@ export interface ShipProps {
     onPlaceShip: (name: string, x: number, y: number, isVertical: boolean) => boolean;
     hits: Set<string>;
     isSunk: boolean;
+    playerReady?: boolean;
 }
 
-const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip, isSunk }: ShipProps) => {
+const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip, isSunk, playerReady }: ShipProps) => {
     const [dragging, setDragging] = useState(false);
     const [previewPosition, setPreviewPosition] = useState({ x, y });
     const [isPreviewValid, setIsPreviewValid] = useState(true);
@@ -118,6 +119,7 @@ const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip, isSunk }:
                 onDrag={handleDrag}
                 onStop={handleDragStop}
                 onStart={handleDragStart}
+                disabled={playerReady}
             >
                 <rect
                     ref={nodeRef}
@@ -128,7 +130,7 @@ const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip, isSunk }:
                     rx="5"
                     ry="5"
                     style={{
-                        cursor: dragging ? 'grabbing' : 'grab',
+                        cursor: !playerReady ? dragging ? 'grabbing' : 'grab' : 'default',
                     }}
                 />
             </Draggable>

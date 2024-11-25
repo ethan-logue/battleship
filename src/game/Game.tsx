@@ -93,6 +93,7 @@ const Game = () => {
 				if (sunk && ship) console.log(`Opponent sunk your ${ship.name}!`);
 	
 				setIsPlayerTurn(true);
+				setGameStatus('Your turn!');
 			}, 500);
 			return () => clearTimeout(timeout);
 		}
@@ -127,7 +128,7 @@ const Game = () => {
         if (!hasOpponent) {
             setIsOpponentReady(true); // Single-player mode auto-readies opponent
 			if (!isPlayerTurn) setIsPlayerTurn(true); // Player goes first in single-player mode
-			setGameStatus('Make your move!');
+			setGameStatus('Your turn!');
         } else if (isPlayerReady && isOpponentReady) {
 			// Both players are ready, start the game
 		}
@@ -143,6 +144,7 @@ const Game = () => {
 			setPlayerGuesses(newGuesses);
 
 			setIsPlayerTurn(false);
+			setGameStatus('Opponent\'s turn...');
 		}
     };
 
@@ -164,12 +166,16 @@ const Game = () => {
 						numRowsCols={numRowsCols}
 						ships={ships}
 						randomizeShipsCallback={playerRandomizeShipsRef}
+						playerGuesses={opponentGuesses}
+						playerReady={isPlayerReady}
 					/>
 
-					<div className='pregame-btns'>
-						<button onClick={() => playerRandomizeShipsRef.current()}>Randomize Ships</button>
-						<button className={`${isPlayerReady ? 'btn-ready' : 'btn-unready'}`} onClick={handleReadyUp}>{isPlayerReady ? 'Ready!' : 'Ready Up'}</button>
-					</div>
+					{!isPlayerReady &&
+						<div className='pregame-btns'>
+							<button onClick={() => playerRandomizeShipsRef.current()}>Randomize Ships</button>
+							<button className={`${isPlayerReady ? 'btn-ready' : 'btn-unready'}`} onClick={handleReadyUp}>{isPlayerReady ? 'Ready!' : 'Ready Up'}</button>
+						</div>
+					}
 				</div>
 				<div className={`game-board-container`}>
 					<h2>Opponent's Board</h2>

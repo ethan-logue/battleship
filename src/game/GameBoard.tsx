@@ -11,6 +11,7 @@ interface GameBoardProps {
     randomizeShipsCallback?: React.MutableRefObject<() => void>;
     onCellClick?: (row: string, col: number, hit: boolean) => void;
     playerGuesses?: Map<string, 'hit' | 'miss'>;
+    playerReady?: boolean;
     classes?: string;
 }
 
@@ -21,6 +22,7 @@ const GameBoard = React.memo(({
     randomizeShipsCallback,
     onCellClick,
     playerGuesses = new Map<string, 'hit' | 'miss'>(),
+    playerReady,
     classes = '',
 }: GameBoardProps) => {
 
@@ -150,6 +152,7 @@ const GameBoard = React.memo(({
                             {...ship}
                             cellSize={cSize}
                             onPlaceShip={handleShipPlacement}
+                            playerReady={playerReady}
                         />
                     ))}
                 </g>
