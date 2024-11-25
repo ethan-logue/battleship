@@ -14,6 +14,17 @@ export const getOccupiedCells = (x: number, y: number, length: number, isVertica
 };
 
 /**
+ * Get all available cells that haven't been guessed yet.
+ */
+export const getAvailableCells = (rows: number, cols: number, guesses: Map<string, 'hit' | 'miss'>): string[] => {
+    const availableCells = Array.from({ length: rows }, (_, row) =>
+        Array.from({ length: cols }, (_, col) => `${col},${row}`)
+    ).flat();
+
+    return availableCells.filter((cell) => !guesses.has(cell));
+};
+
+/**
  * Check if a cell is within the game board bounds.
  */
 const isWithinBounds = (cellX: number, cellY: number, boardMargin: number, rows: number, cols: number): boolean => {

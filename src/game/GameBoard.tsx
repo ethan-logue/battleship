@@ -12,6 +12,7 @@ interface GameBoardProps {
     onCellClick?: (row: string, col: number, hit: boolean) => void;
     playerGuesses?: Map<string, 'hit' | 'miss'>;
     playerReady?: boolean;
+    updateShips: (ships: ShipProps[]) => void;
     classes?: string;
 }
 
@@ -23,6 +24,7 @@ const GameBoard = React.memo(({
     onCellClick,
     playerGuesses = new Map<string, 'hit' | 'miss'>(),
     playerReady,
+    updateShips,
     classes = '',
 }: GameBoardProps) => {
 
@@ -68,11 +70,10 @@ const GameBoard = React.memo(({
         if (!ship) return false;
     
         if (isValidPlacement(x, y, ship.length, isVertical, name, ships, boardMargin, rows, cols)) {
-            setShips((prevShips) =>
-                prevShips.map((s) =>
-                    s.name === name ? { ...s, x, y, isVertical, placed: true } : s
-                )
+            const updatedShips = ships.map((s) =>
+                s.name === name ? { ...s, x, y, isVertical, placed: true } : s
             );
+            updateShips(updatedShips); // Update ships via parent
             return true;
         }
         return false;

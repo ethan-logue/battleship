@@ -1,5 +1,5 @@
 import { ShipProps } from "../components/Ship";
-import { getOccupiedCells } from "./BoardLogic";
+import { getAvailableCells, getOccupiedCells } from "./BoardLogic";
 
 /**
  * Check if a guess hits any ship.
@@ -31,9 +31,7 @@ export const randomMove = (
     numRowsCols: number,
     guesses: Map<string, 'hit' | 'miss'>
 ): string | null => {
-    const availableCells = Array.from({ length: numRowsCols }, (_, row) =>
-        Array.from({ length: numRowsCols }, (_, col) => `${col},${row}`)
-    ).flat();
+    const availableCells = getAvailableCells(numRowsCols, numRowsCols, guesses);
 
     const remainingCells = availableCells.filter((cell) => !guesses.has(cell));
     if (remainingCells.length === 0) return null;

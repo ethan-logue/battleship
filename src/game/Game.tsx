@@ -1,10 +1,11 @@
 // import { useState, useEffect } from 'react';
 // import io from 'socket.io-client';
 // import Chat from './Chat';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import GameBoard from './GameBoard';
 import './Game.css';
 import { isShipHit, randomMove } from './GameLogic';
+import { ShipProps } from '../components/Ship';
 
 const Game = () => {
   // const [board, setBoard] = useState(createEmptyBoard());
@@ -48,16 +49,6 @@ const Game = () => {
 	// Initial game setup
 	const numRowsCols = 10;
 	const [cellSize, setCellSize] = useState(calculateCellSize(window.innerWidth));
-	const ships = useMemo(() => {
-		const defaultShipSettings = { x: -1, y: -1, isVertical: false, cellSize: cellSize, onPlaceShip: () => true, hits: new Set<string>(), isSunk: false };
-		return [
-			{ name: 'carrier', length: 5, ...defaultShipSettings },
-			{ name: 'battleship', length: 4, ...defaultShipSettings },
-			{ name: 'cruiser', length: 3, ...defaultShipSettings },
-			{ name: 'submarine', length: 3, ...defaultShipSettings },
-			{ name: 'destroyer', length: 2, ...defaultShipSettings },
-		];
-	}, [cellSize]);
 	const playerRandomizeShipsRef = useRef<() => void>(() => {});
 	const opponentRandomizeShipsRef = useRef<() => void>(() => {});
 
@@ -68,37 +59,19 @@ const Game = () => {
 	const [isOpponentReady, setIsOpponentReady] = useState(false);
 	const [playerGuesses, setPlayerGuesses] = useState(new Map<string, 'hit' | 'miss'>());
 	const [opponentGuesses, setOpponentGuesses] = useState(new Map<string, 'hit' | 'miss'>());
+	const [playerShips, setPlayerShips] = useState<ShipProps[]>(() => initializeShips(cellSize));
+    const [opponentShips, setOpponentShips] = useState<ShipProps[]>(() => initializeShips(cellSize));
 
-	useEffect(() => {
-		if (!isPlayerTurn && !hasOpponent) {
-			const timeout = setTimeout(() => {
-				const randomGuess = randomMove(numRowsCols, opponentGuesses);
-				if (!randomGuess) return;
-	
-				const { hit, sunk, ship } = isShipHit(randomGuess, ships, 1);
-	
-				const newGuesses = new Map(opponentGuesses);
-				newGuesses.set(randomGuess, hit ? 'hit' : 'miss');
-				setOpponentGuesses(newGuesses);
-	
-				if (hit && ship) {
-					setShips((prevShips) =>
-						prevShips.map((s) =>
-							s.name === ship.name ? { ...s, hits: new Set(s.hits).add(randomGuess), isSunk: sunk } : s
-						)
-					);
-				}
-	
-				console.log(`Opponent guessed: ${randomGuess}, Result: ${hit ? 'hit' : 'miss'}`);
-				if (sunk && ship) console.log(`Opponent sunk your ${ship.name}!`);
-	
-				setIsPlayerTurn(true);
-				setGameStatus('Your turn!');
-			}, 500);
-			return () => clearTimeout(timeout);
-		}
-	}, [isPlayerTurn, opponentGuesses, hasOpponent, ships]);
-	
+	function initializeShips(cellSize: number) {
+		const defaultShipSettings = { x: -1, y: -1, isVertical: false, cellSize, onPlaceShip: () => true, hits: new Set<string>(), isSunk: false };
+		return [
+			{ name: 'carrier', length: 5, ...defaultShipSettings },
+			{ name: 'battleship', length: 4, ...defaultShipSettings },
+			{ name: 'cruiser', length: 3, ...defaultShipSettings },
+			{ name: 'submarine', length: 3, ...defaultShipSettings },
+			{ name: 'destroyer', length: 2, ...defaultShipSettings },
+		];
+	}
 
 	// Calculate cell size based on window width
 	function calculateCellSize(width: number) {
@@ -134,11 +107,11 @@ const Game = () => {
 		}
     };
 
+	// Handle player's click on the opponent's board
 	const handleCellClick = (row: string, col: number, hit: boolean) => {
-		if (!isPlayerTurn) return;
-
 		const guess = `${row}${col}`;
-		if (!playerGuesses.has(guess)) {
+
+		if (isPlayerTurn && !playerGuesses.has(guess)) {
 			const newGuesses = new Map(playerGuesses);
 			newGuesses.set(guess, hit ? 'hit' : 'miss');
 			setPlayerGuesses(newGuesses);
@@ -147,6 +120,39 @@ const Game = () => {
 			setGameStatus('Opponent\'s turn...');
 		}
     };
+
+	// Handle opponent's random move
+    useEffect(() => {
+        if (!isPlayerTurn && !hasOpponent) {
+            const timeout = setTimeout(() => {
+                const randomGuess = randomMove(numRowsCols, opponentGuesses);
+                if (!randomGuess) return;
+
+                const { hit, sunk, ship } = isShipHit(randomGuess, playerShips, 1);
+
+                // Update opponent's guesses
+                const newGuesses = new Map(opponentGuesses);
+                newGuesses.set(randomGuess, hit ? 'hit' : 'miss');
+                setOpponentGuesses(newGuesses);
+
+                console.log('Opponent guessed:', randomGuess, hit ? 'hit' : 'miss');
+
+                // Update player's ships if hit
+                if (hit && ship) {
+                    setPlayerShips((prevShips) =>
+                        prevShips.map((s) =>
+                            s.name === ship.name ? { ...s, hits: new Set(s.hits).add(randomGuess), isSunk: sunk } : s
+                        )
+                    );
+                }
+
+                setIsPlayerTurn(true);
+                setGameStatus('Your turn!');
+            }, 500);
+
+            return () => clearTimeout(timeout);
+        }
+    }, [hasOpponent, isPlayerTurn, opponentGuesses, playerShips]);
 
   	return (
 		<div className="game-container">
@@ -164,10 +170,11 @@ const Game = () => {
 					<GameBoard
 						cellSize={cellSize}
 						numRowsCols={numRowsCols}
-						ships={ships}
+						ships={playerShips}
 						randomizeShipsCallback={playerRandomizeShipsRef}
 						playerGuesses={opponentGuesses}
 						playerReady={isPlayerReady}
+						updateShips={setPlayerShips}
 					/>
 
 					{!isPlayerReady &&
@@ -182,10 +189,11 @@ const Game = () => {
 					<GameBoard
 						cellSize={cellSize} 
 						numRowsCols={numRowsCols}
-						ships={!hasOpponent ? ships : undefined}
+						ships={opponentShips}
 						randomizeShipsCallback={opponentRandomizeShipsRef}
-						onCellClick={handleCellClick}
 						playerGuesses={playerGuesses}
+						updateShips={setOpponentShips}
+						onCellClick={handleCellClick}
 						classes={`opponent-board ${!isPlayerTurn || !isPlayerReady ? 'disabled' : ''}`}
 					/>
 				</div>
