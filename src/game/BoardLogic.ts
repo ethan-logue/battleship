@@ -16,7 +16,7 @@ export const getOccupiedCells = (x: number, y: number, length: number, isVertica
 /**
  * Check if a cell is within the game board bounds.
  */
-export const isWithinBounds = (cellX: number, cellY: number, boardMargin: number, rows: number, cols: number): boolean => {
+const isWithinBounds = (cellX: number, cellY: number, boardMargin: number, rows: number, cols: number): boolean => {
     return (
         cellX >= boardMargin &&
         cellX < cols + boardMargin &&
@@ -28,7 +28,7 @@ export const isWithinBounds = (cellX: number, cellY: number, boardMargin: number
 /**
  * Check if a cell is adjacent to any occupied cells.
  */
-export const isAdjacent = (cellX: number, cellY: number, occupiedCells: Set<string>): boolean => {
+const isAdjacent = (cellX: number, cellY: number, occupiedCells: Set<string>): boolean => {
     const adjacentCells = [
         `${cellX - 1},${cellY}`, `${cellX + 1},${cellY}`, // Horizontal neighbors
         `${cellX},${cellY - 1}`, `${cellX},${cellY + 1}`, // Vertical neighbors
@@ -74,15 +74,4 @@ export const isValidPlacement = (
             );
         }
     );
-};
-
-/**
- * Check if a guess hits any ship.
- */
-export const isShipHit = (guess: string, ships: ShipProps[], boardMargin: number) => {
-    const shipCells = ships.flatMap((ship) =>
-        getOccupiedCells(ship.x, ship.y, ship.length, ship.isVertical, boardMargin)
-    );
-
-    return shipCells.includes(guess);
 };

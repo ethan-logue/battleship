@@ -9,9 +9,11 @@ export interface ShipProps {
     isVertical: boolean;
     cellSize: number;
     onPlaceShip: (name: string, x: number, y: number, isVertical: boolean) => boolean;
+    hits: Set<string>;
+    isSunk: boolean;
 }
 
-const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip }: ShipProps) => {
+const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip, isSunk }: ShipProps) => {
     const [dragging, setDragging] = useState(false);
     const [previewPosition, setPreviewPosition] = useState({ x, y });
     const [isPreviewValid, setIsPreviewValid] = useState(true);
@@ -92,7 +94,7 @@ const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip }: ShipPro
     }, [x, y]);
 
     return (
-        <g id={`${name}`} className={`ship ${name}`}>
+        <g id={`${name}`} className={`ship ${name} ${isSunk ? 'sunk' : ''}`}>
             <rect
                 className='ship-preview'
                 x={previewPosition.x * cellSize}

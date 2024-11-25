@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import './GameBoard.css';
 import Ship, { ShipProps } from '../components/Ship';
-import { getOccupiedCells, isValidPlacement, isShipHit } from './BoardLogic';
+import { getOccupiedCells, isValidPlacement } from './BoardLogic';
+import { isShipHit } from './GameLogic';
 
 interface GameBoardProps {
     cellSize: number;
@@ -75,11 +76,20 @@ const GameBoard = React.memo(({
         return false;
     };
 
-    const handleCellClick = React.useCallback((row: string, col: number) => {
+    // Handle cell click
+    const handleCellClick = useCallback((row: string, col: number) => {
         if (!onCellClick) return;
 
         const guess = `${col},${rowLabels.indexOf(row)}`;
-        const hit = isShipHit(guess, ships, boardMargin);
+        const { hit, sunk, ship } = isShipHit(guess, ships, boardMargin);
+
+        if (hit && ship) {
+            setShips((prevShips) =>
+                prevShips.map((s) =>
+                    s.name === ship.name ? { ...s, hits: new Set(s.hits).add(guess), isSunk: sunk } : s
+                )
+            );
+        }
 
         onCellClick(row, col, hit);
     }, [onCellClick, rowLabels, ships]);

@@ -26,11 +26,13 @@
 }
 
 .board-cell.hit {
-    fill: #ff0000;
+    fill: #ec4141;
+    pointer-events: none;
 }
 
 .board-cell.miss {
     fill: #6394ff;
+    pointer-events: none;
 }
 
 .opponent-board > .ships * {
@@ -38,4 +40,13 @@
     fill: none;
     stroke: red;
     stroke-width: 2;
+}
+
+.opponent-board > .ships .ship.sunk * {
+    fill: #bb0101;
+}
+
+.game-board.disabled{
+    pointer-events: none;
+    opacity: 0.5;
 }
