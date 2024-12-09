@@ -10,7 +10,7 @@ interface GameBoardProps {
     ships?: ShipProps[];
     randomizeShipsCallback?: React.MutableRefObject<() => void>;
     onCellClick?: (row: string, col: number, hit: boolean) => void;
-    playerGuesses?: Map<string, 'hit' | 'miss'>;
+    playerGuesses: Map<string, 'hit' | 'miss'>;
     playerReady?: boolean;
     updateShips: (ships: ShipProps[]) => void;
     classes?: string;

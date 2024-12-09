@@ -6,13 +6,11 @@ import AuthFormGroup from '../components/AuthFormGroup';
 const Auth = () => {
     const [isRegister, setIsRegister] = useState(false);
     const [formData, setFormData] = useState({ username: '', email: '', password: '' });
-    // const [message, setMessage] = useState('');
-    // const [isLoggedIn, setIsLoggedIn] = useState(false);
-    // const [lobbyData, setLobbyData] = useState(null);
+    const [message, setMessage] = useState('');
+    const navigate = useNavigate();
 
     const toggleForm = () => setIsRegister(!isRegister);
 
-    const navigate = useNavigate(); // Hook for redirection
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,22 +18,27 @@ const Auth = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const url = isRegister ? 'http://localhost:3000/api/auth/register' : 'http://localhost:3000/api/auth/login';
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        });
 
-        // const response = await fetch('http://localhost:8000/api/auth/login.php', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //     },
-        //     body: JSON.stringify(formData),
-        // });
-
-        // const result = await response.json();
-
-        // if (result.status === 'success') {
-            navigate('/lobby'); // Redirect to lobby on success
-        // } else {
-        //     setMessage(result.message);
-        // }
+        const result = await response.json();
+        if (response.ok) {
+            if (!isRegister) {
+                localStorage.setItem('token', result.token);
+                navigate('/lobby');
+            } else {
+                setMessage('Registration successful! Please log in.');
+                setIsRegister(false);
+            }
+        } else {
+            setMessage(result.error);
+        }
     };
 
     return (
@@ -60,7 +63,7 @@ const Auth = () => {
                         </div>
                         
                     </form>
-                    {/* {message && <p>{message}</p>} */}
+                    {message && <p>{message}</p>}
                 </div>
                 
             </div>

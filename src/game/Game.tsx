@@ -1,48 +1,16 @@
-// import { useState, useEffect } from 'react';
-// import io from 'socket.io-client';
-// import Chat from './Chat';
+import io from 'socket.io-client';
+import Chat from './Chat';
 import { useEffect, useRef, useState } from 'react';
 import GameBoard from './GameBoard';
 import './Game.css';
 import { isShipHit, randomMove } from './GameLogic';
 import { ShipProps } from '../components/Ship';
 
+const socket = io('http://localhost:3000');
+
 const Game = () => {
-  // const [board, setBoard] = useState(createEmptyBoard());
-  // const [isMyTurn, setIsMyTurn] = useState(false);
-  // const [gameStatus, setGameStatus] = useState('ongoing');
-  // const socket = io('http://localhost:3000');
-  // const gameId = match.params.gameId;
 
-  // useEffect(() => {
-  //   // Join the game room
-  //   socket.emit('joinGame', gameId);
-
-  //   // Listen for board updates
-  //   socket.on('updateBoard', (newBoard) => {
-  //     setBoard(newBoard.board);
-  //     setIsMyTurn(newBoard.isMyTurn);
-  //   });
-
-  //   // Listen for game status updates
-  //   socket.on('gameOver', (winner) => {
-  //     setGameStatus(`Game over! Winner: ${winner}`);
-  //   });
-  // }, []);
-
-  // const makeMove = (x, y) => {
-  //   if (isMyTurn && board[x][y] === 0) {
-  //     socket.emit('makeMove', { gameId, x, y });
-  //   } else {
-  //     alert('Not your turn or invalid move!');
-  //   }
-  // };
-
-  // ****************************************** //
-
-  // const handleCellClick = (row: string, col: number) => {
-  //   console.log(`cell-${row}${col}`);
-  // };
+  	const gameId = '1';
 
 	const hasOpponent = false; // TODO: pass in single player or multiplayer from lobby, false is single player
 
@@ -73,6 +41,25 @@ const Game = () => {
 		];
 	}
 
+	useEffect(() => {
+        socket.emit('joinGame', gameId);
+
+        socket.on('updateBoard', (newBoard) => {
+            setPlayerGuesses(new Map(newBoard.playerGuesses));
+            setOpponentGuesses(new Map(newBoard.opponentGuesses));
+            setIsPlayerTurn(newBoard.isPlayerTurn);
+        });
+
+        socket.on('gameOver', (winner) => {
+            setGameStatus(`Game over! Winner: ${winner}`);
+        });
+
+        return () => {
+            socket.off('updateBoard');
+            socket.off('gameOver');
+        };
+    }, [gameId]);
+
 	// Calculate cell size based on window width
 	function calculateCellSize(width: number) {
 		const padding = 128;
@@ -98,6 +85,8 @@ const Game = () => {
 
 	const handleReadyUp = () => {
         setIsPlayerReady(!isPlayerReady);
+		socket.emit('playerReady', gameId);
+
         if (!hasOpponent) {
             setIsOpponentReady(true); // Single-player mode auto-readies opponent
 			if (!isPlayerTurn) setIsPlayerTurn(true); // Player goes first in single-player mode
@@ -118,6 +107,7 @@ const Game = () => {
 
 			setIsPlayerTurn(false);
 			setGameStatus('Opponent\'s turn...');
+			socket.emit('makeMove', { gameId, guess, hit });
 		}
     };
 
@@ -199,7 +189,7 @@ const Game = () => {
 				</div>
 			</div>
 		
-			{/* <Chat socket={socket} room={gameId} /> */}
+			<Chat socket={socket} room={gameId} />
 		</div>
   );
 };
