@@ -46,9 +46,15 @@ io.on('connection', (socket) => {
     io.emit('updateLobbyPlayers', players);
 
     // Handle chat messages
-    socket.on('sendMessage', (message) => {
-        io.emit('message', { playerId: socket.id, message });
+    socket.on('sendMessage', (data) => {
+        const { room, message, username } = data;
+        io.to(room).emit('messageResponse', { username, message });
     });
+    // Handle room joining
+    socket.on('joinRoom', (room) => {
+        socket.join(room);
+    });
+
 
     // Handle challenges
     socket.on('sendChallenge', (opponentId) => {

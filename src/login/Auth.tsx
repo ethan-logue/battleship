@@ -14,6 +14,7 @@ const Auth = () => {
 
     const toggleForm = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
+        setMessage('');
         setIsRegister(!isRegister);
     };
 
@@ -51,6 +52,13 @@ const Auth = () => {
         }
     };
 
+    const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSubmit(e);
+        }
+    };
+
     return (
         <div className='auth-wrapper'>
             <div className='auth-container'>
@@ -58,7 +66,8 @@ const Auth = () => {
 
                 <div className={`auth-body ${isRegister ? 'grow' : ''}`}>
                     <h2 className='auth-heading'>{isRegister ? 'Register' : 'Login Portal'}</h2>
-                    <form className='auth-form' onSubmit={handleSubmit}>
+                    {message && <p>{message}</p>}
+                    <form className='auth-form' onSubmit={handleSubmit} onKeyDown={handleKeyPress}>
                         {isRegister && (
                             <AuthFormGroup name='username' onChange={handleInputChange} />
                         )}
@@ -73,9 +82,7 @@ const Auth = () => {
                         </div>
                         
                     </form>
-                    {message && <p>{message}</p>}
                 </div>
-                
             </div>
         </div>
     );

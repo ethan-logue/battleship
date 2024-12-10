@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import Chat from '../components/Chat';
 import { getToken } from '../utils/tokenUtils';
-import { Player } from '../utils/PlayerContext';
+import { Player, usePlayer } from '../utils/PlayerContext';
 
 const socket = io('http://localhost:3000', {
     auth: {
@@ -16,7 +16,7 @@ const Lobby = () => {
     const [challengeSent, setChallengeSent] = useState(-1);
     const navigate = useNavigate();
 
-    // const { player } = usePlayer();
+    const { player } = usePlayer();
 
     useEffect(() => {
         // Fetch list of players from the server
@@ -70,13 +70,15 @@ const Lobby = () => {
             <button onClick={handleLogout}>Log out</button>
             <h1>Lobby</h1>
             <ul>
-                {players.map((player) => (
-                    <li key={player.id}>
-                        {player.username}
-                        {challengeSent === player.id ? (
-                            <button disabled>Challenge Sent</button>
-                        ) : (
-                            <button onClick={() => sendChallenge(player.id)}>Challenge</button>
+                {players.map((p) => (
+                    <li key={p.id}>
+                        {p.username}
+                        {player && p.id !== player.id && (
+                            challengeSent === p.id ? (
+                                <button disabled>Challenge Sent</button>
+                            ) : (
+                                <button onClick={() => sendChallenge(p.id)}>Challenge</button>
+                            )
                         )}
                     </li>
                 ))}

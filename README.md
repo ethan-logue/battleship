@@ -2,9 +2,8 @@
 In the game of Battleship, two players face off in a strategic guessing game. Each player has a grid where they can place a variety of battleships anywhere. The ships come in sizes of 1x2 to 1x6 and the locations of the opposing ships are hidden. Each player takes turns guessing the location of a ship by listing grid coordinates i.e. A6. The other player will then respond with if it was a hit or not and the player will mark their guess accordingly. Once all the boat coordinated have been revealed, the game is over and the last player remaining wins. 
 
 **Tech Stack**
-- React
-- PHP
-- MySQL
+- Frontend: React & TypeScript
+- Backend: Javascript & MySQL
 
 ## Setup
 *Prerequisites*
