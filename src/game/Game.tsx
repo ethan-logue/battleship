@@ -1,16 +1,18 @@
 import io from 'socket.io-client';
-import Chat from './Chat';
+import Chat from '../components/Chat';
 import { useEffect, useRef, useState } from 'react';
 import GameBoard from './GameBoard';
 import './Game.css';
 import { isShipHit, randomMove } from './GameLogic';
 import { ShipProps } from '../components/Ship';
+import { useNavigate } from 'react-router-dom';
 
 const socket = io('http://localhost:3000');
 
 const Game = () => {
 
   	const gameId = '1';
+	const navigate = useNavigate();
 
 	const hasOpponent = false; // TODO: pass in single player or multiplayer from lobby, false is single player
 
@@ -144,6 +146,11 @@ const Game = () => {
         }
     }, [hasOpponent, isPlayerTurn, opponentGuesses, playerShips]);
 
+	const handleQuit = () => {
+		socket.emit('quitGame', gameId);
+		navigate('/lobby');
+	}
+
   	return (
 		<div className="game-container">
 
@@ -167,12 +174,16 @@ const Game = () => {
 						updateShips={setPlayerShips}
 					/>
 
-					{!isPlayerReady &&
-						<div className='pregame-btns'>
+					
+					<div className='game-btns'>
+						<button onClick={handleQuit}>Quit Game</button>
+						{!isPlayerReady &&
+						<>
 							<button onClick={() => playerRandomizeShipsRef.current()}>Randomize Ships</button>
 							<button className={`${isPlayerReady ? 'btn-ready' : 'btn-unready'}`} onClick={handleReadyUp}>{isPlayerReady ? 'Ready!' : 'Ready Up'}</button>
-						</div>
-					}
+						</>
+						}
+					</div>
 				</div>
 				<div className={`game-board-container`}>
 					<h2>Opponent's Board</h2>

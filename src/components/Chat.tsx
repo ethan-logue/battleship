@@ -6,14 +6,19 @@ interface ChatProps {
     room: string;
 }
 
+interface Message {
+    playerId: string;
+    message: string;
+}
+
 const Chat = ({ socket, room }: ChatProps) => {
-    const [messages, setMessages] = useState<string[]>([]);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
 
     useEffect(() => {
         socket.emit('joinRoom', room);
 
-        socket.on('message', (message) => {
+        socket.on('message', (message: Message) => {
             setMessages((prevMessages) => [...prevMessages, message]);
         });
 
@@ -33,7 +38,9 @@ const Chat = ({ socket, room }: ChatProps) => {
         <div className="chat-container">
             <div className="messages">
                 {messages.map((msg, index) => (
-                    <div key={index}>{msg}</div>
+                    <div key={index}>
+                        <strong>{msg.playerId}:</strong> {msg.message}
+                    </div>
                 ))}
             </div>
             <input

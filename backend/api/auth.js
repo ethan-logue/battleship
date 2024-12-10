@@ -28,7 +28,14 @@ router.post('/login', (req, res) => {
             }
 
             const token = jwt.sign({ id: user.player_ID }, process.env.JWT_SECRET, { expiresIn: '1h' });
-            res.json({ token, user: { id: user.player_ID, username: user.username, email: user.email } });
+            
+            const updateQuery = 'UPDATE Player SET current_lobby_id = ? WHERE player_ID = ?';
+            connection.query(updateQuery, [1, user.player_ID], (updateErr) => {
+                if (updateErr) {
+                    return res.status(500).json({ error: 'Database error' });
+                }
+                res.json({ token, user: { id: user.player_ID, username: user.username, email: user.email } });
+            });
         });
     });
 });
