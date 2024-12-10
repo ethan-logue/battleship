@@ -11,7 +11,7 @@ export interface Player {
 
 interface PlayerContextType {
     player: Player | null;
-    setPlayer: (player: Player) => void;
+    setPlayer: (player: Player | null) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);

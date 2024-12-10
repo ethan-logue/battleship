@@ -1,17 +1,25 @@
 import io from 'socket.io-client';
 import Chat from '../components/Chat';
 import { useEffect, useRef, useState } from 'react';
-import GameBoard from './GameBoard';
+import GameBoard from './board/GameBoard';
 import './Game.css';
 import { isShipHit, randomMove } from './GameLogic';
 import { ShipProps } from '../components/Ship';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { baseUrl, getData } from '../utils/apiUtils';
+import { getToken } from '../utils/tokenUtils';
+import { usePlayer } from '../utils/PlayerContext';
 
-const socket = io('http://localhost:3000');
+const socket = io(baseUrl, {
+    auth: {
+        token: getToken(),
+    },
+});
 
 const Game = () => {
 
-  	const gameId = '1';
+	const { gameId } = useParams<{ gameId: string }>();
+	const { player } = usePlayer();
 	const navigate = useNavigate();
 
 	const hasOpponent = false; // TODO: pass in single player or multiplayer from lobby, false is single player
@@ -53,7 +61,11 @@ const Game = () => {
         });
 
         socket.on('gameOver', (winner) => {
-            setGameStatus(`Game over! Winner: ${winner}`);
+			if (winner === 'quit') {
+				setGameStatus('Game over! Opponent has quit the game.');
+			} else {
+            	setGameStatus(`Game over! Winner: ${winner}`);
+			}
         });
 
         return () => {
@@ -146,10 +158,15 @@ const Game = () => {
         }
     }, [hasOpponent, isPlayerTurn, opponentGuesses, playerShips]);
 
-	const handleQuit = () => {
-		socket.emit('quitGame', gameId);
-		navigate('/lobby');
-	}
+	const handleQuit = async () => {
+        try {
+            await getData('/game/quit', 'POST', { playerId: player?.id });
+            socket.emit('quitGame', gameId);
+            navigate('/lobby');
+        } catch (error) {
+            console.error('Error quitting game:', error);
+        }
+    };
 
   	return (
 		<div className="game-container">
@@ -200,7 +217,7 @@ const Game = () => {
 				</div>
 			</div>
 		
-			<Chat socket={socket} room={gameId} />
+			<Chat socket={socket} room={gameId || ''} />
 		</div>
   );
 };

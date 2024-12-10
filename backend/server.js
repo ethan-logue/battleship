@@ -3,8 +3,8 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import connection from './connection.js';
 import dotenv from 'dotenv';
+import { logoutUser } from './api/auth.js';
 
 dotenv.config();
 
@@ -41,20 +41,22 @@ let players = [];
 io.on('connection', (socket) => {
     console.log('a user connected:', socket.id);
 
-    // Add player to the lobby
-    players.push({ id: socket.id, username: `Player ${players.length + 1}` });
-    io.emit('updateLobbyPlayers', players);
+    // Handle user login
+    socket.on('login', (username, userId) => {
+        players.push({ socketId: socket.id, username, id: userId });
+        io.emit('updateLobbyPlayers', players);
+    });
 
     // Handle chat messages
     socket.on('sendMessage', (data) => {
         const { room, message, username } = data;
         io.to(room).emit('messageResponse', { username, message });
     });
+
     // Handle room joining
     socket.on('joinRoom', (room) => {
         socket.join(room);
     });
-
 
     // Handle challenges
     socket.on('sendChallenge', (opponentId) => {
@@ -68,11 +70,45 @@ io.on('connection', (socket) => {
         io.to(opponentId).emit('challengeAccepted', gameId);
     });
 
+    // Handle quitting the game
+    socket.on('quitGame', (gameId) => {
+        console.log(`Player quit game: ${gameId}`);
+        io.to(gameId).emit('gameOver', 'quit');
+    });
+
+    // Handle logout
+    socket.on('logout', (id) => {
+        console.log(`Player logged out: ${id}`);
+
+        // Find the player in the players array
+        const player = players.find((p) => p.id === id);
+
+        if (player) {
+            // Remove the player from the players array
+            players = players.filter((p) => p.id !== id);
+            io.emit('updateLobbyPlayers', players);
+        }
+    });
+
     // Handle disconnection
     socket.on('disconnect', () => {
         console.log('user disconnected:', socket.id);
-        players = players.filter((player) => player.id !== socket.id);
-        io.emit('updateLobbyPlayers', players);
+
+        // Find the player in the players array
+        const player = players.find((p) => p.socketId === socket.id);
+
+        if (player) {
+            // Call the logout helper to update the player's current lobby and game ID to null and invalidate the token on disconnection
+            logoutUser(player.id, (err) => {
+                if (err) {
+                    console.error('Error logging out player:', err);
+                }
+            });
+
+            // Remove the player from the players array
+            players = players.filter((p) => p.socketId !== socket.id);
+            io.emit('updateLobbyPlayers', players);
+        }
     });
 });
 

@@ -1,4 +1,4 @@
-import { ShipProps } from '../components/Ship';
+import { ShipProps } from '../../components/Ship';
 
 /**
  * Get all occupied cells for a given ship.

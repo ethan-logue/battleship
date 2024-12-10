@@ -1,5 +1,5 @@
 import { ShipProps } from "../components/Ship";
-import { getAvailableCells, getOccupiedCells } from "./BoardLogic";
+import { getAvailableCells, getOccupiedCells } from "./board/BoardLogic";
 
 /**
  * Check if a guess hits any ship.

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import io from 'socket.io-client';
 import Chat from '../components/Chat';
-import { getToken } from '../utils/tokenUtils';
 import { Player, usePlayer } from '../utils/PlayerContext';
+import { baseUrl, getData } from '../utils/apiUtils';
+import { io } from 'socket.io-client';
+import { getToken } from '../utils/tokenUtils';
 
-const socket = io('http://localhost:3000', {
+const socket = io(baseUrl, {
     auth: {
         token: getToken(),
     },
@@ -13,23 +14,20 @@ const socket = io('http://localhost:3000', {
 
 const Lobby = () => {
     const [players, setPlayers] = useState<Player[]>([]);
-    const [challengeSent, setChallengeSent] = useState(-1);
+    const [challengeSent, setChallengeSent] = useState<number | null>(null);
     const navigate = useNavigate();
 
-    const { player } = usePlayer();
+    const { player, setPlayer } = usePlayer();
 
     useEffect(() => {
         // Fetch list of players from the server
-        fetch('http://localhost:3000/api/lobby', {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`,
-            },
-        })
-            .then((response) => response.json())
+        getData('/lobby')
             .then((data) => setPlayers(data))
             .catch((error) => console.error('Error fetching players:', error));
 
         socket.on('updateLobbyPlayers', (playerList: Player[]) => {
+            console.log('Received updated player list:', playerList);
+            
             setPlayers(playerList);
         });
 
@@ -57,14 +55,28 @@ const Lobby = () => {
         setChallengeSent(opponentId);
     };
 
-    const handleLogout = () => {
-        navigate('/login');
+    const handleLogout = async () => {
+        try {
+            await getData('/auth/logout', 'POST');
+            socket.emit('logout', player?.id);
+            localStorage.removeItem('token');
+            setPlayer(null);
+            navigate('/login');
+        } catch (error) {
+            console.error('Error logging out:', error);
+        }
     };
 
-    const initGame = () => {
-        navigate('/game');
+    // Create single player game
+    const initGame = async () => {
+        try {
+            const data = await getData('/game/create', 'POST', { player1_ID: player?.id, player2_ID: null });
+            navigate(`/game/${data.gameId}`);
+        } catch (error) {
+            console.error('Error creating game:', error);
+        }
     };
-    
+
     return (
         <div className="lobby-container">
             <button onClick={handleLogout}>Log out</button>

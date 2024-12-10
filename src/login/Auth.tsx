@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import './Auth.css';
 import AuthFormGroup from '../components/AuthFormGroup';
 import { usePlayer } from '../utils/PlayerContext';
+import { baseUrl } from '../utils/apiUtils';
+import { io } from 'socket.io-client';
+
+const socket = io(baseUrl);
 
 const Auth = () => {
     const [isRegister, setIsRegister] = useState(false);
@@ -28,7 +32,7 @@ const Auth = () => {
             setMessage('Please fill in all fields');
             return;
         }
-        const url = isRegister ? 'http://localhost:3000/api/auth/register' : 'http://localhost:3000/api/auth/login';
+        const url = isRegister ? `${baseUrl}/api/auth/register` : `${baseUrl}/api/auth/login`;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -41,6 +45,7 @@ const Auth = () => {
         if (response.ok) {
             if (!isRegister) {
                 localStorage.setItem('token', result.token);
+                socket.emit('login', result.user.username, result.user.id);
                 setPlayer(result.user);
                 navigate('/lobby');
             } else {

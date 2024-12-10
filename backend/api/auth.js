@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import connection from '../connection.js';
+import authenticateToken from '../utils/authToken.js';
 
 const router = express.Router();
 
@@ -55,9 +56,28 @@ router.post('/register', (req, res) => {
 });
 
 // Logout route
-router.post('/logout', (req, res) => {
-    // Invalidate the token (implementation depends on your token management strategy)
-    res.json({ message: 'Logout successful' });
+router.post('/logout', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    logoutUser(userId, (err) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json({ message: 'Logout successful' });
+    });
 });
+
+export const logoutUser = (userId, callback) => {
+    const query = 'UPDATE Player SET current_lobby_id = NULL, current_game_id = NULL WHERE player_ID = ?';
+    connection.query(query, [userId], (err) => {
+        if (err) {
+            console.error('Error updating player lobby ID:', err);
+            callback(err);
+        } else {
+            // Invalidate the token (implementation depends on your token management strategy)
+            // For example, you can use a token blacklist or change the token secret
+            callback(null);
+        }
+    });
+};
 
 export default router;
