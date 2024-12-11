@@ -74,7 +74,7 @@ const Lobby = () => {
 
     const handleLogout = async () => {
         try {
-            await getData('/auth/logout', 'POST', { playerId: player?.id });
+            await getData('/auth/logout', 'POST');
             socket.emit('logout', player?.id);
             localStorage.removeItem('token');
             setPlayer(null);

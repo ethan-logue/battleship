@@ -10,7 +10,7 @@ type ChallengePopupProps = {
 const ChallengePopup: React.FC<ChallengePopupProps> = ({ challenger, onAccept, onReject }) => {
     return (
         <div className='challenge-popup'>
-            <h2 className='challenge-msg'>{challenger.username} has challenged you! Do you accept?</h2>
+            <p className='challenge-msg'><span>{challenger.username}</span> has challenged you! Do you accept?</p>
             <div className='challenge-btns'>
                 <button onClick={onAccept}>Yes</button>
                 <button onClick={onReject}>No</button>

@@ -57,7 +57,7 @@ router.post('/register', (req, res) => {
 
 // Logout route
 router.post('/logout', authenticateToken, (req, res) => {
-    const { userId } = req.body;
+    const userId = req.user.id;
     logoutUser(userId, (err) => {
         if (err) {
             return res.status(500).json({ error: 'Database error' });

@@ -45,7 +45,6 @@ io.on('connection', (socket) => {
     // Handle user login
     socket.on('login', (username, userId) => {
         players.push({ socketId: socket.id, username, id: userId, currentGameId: null, });
-        console.log('Player logged in:', { socketId: socket.id, username, id: userId, currentGameId: null });
         io.emit('updateLobbyPlayers', players);
     });
 
