@@ -14,7 +14,7 @@ const Game = () => {
 	const { player } = usePlayer();
 	const navigate = useNavigate();
 
-	const hasOpponent = false; 
+	const [hasOpponent, setHasOpponent] = useState<boolean>(false);
 
 	// Initial game setup
 	const numRowsCols = 10;
@@ -44,7 +44,10 @@ const Game = () => {
 	}
 
 	useEffect(() => {
-        // socket.emit('joinGame', gameId, player?.socketId);
+		socket.on('hasOpponent', (value) => {
+			console.log('Opponent found:', value);
+			setHasOpponent(value);
+		});
 
 		socket.on('updateGameState', (gameState) => {
 			if (player) {
@@ -57,10 +60,10 @@ const Game = () => {
 
 		socket.on('startGame', (gameState) => {
 			if (player) {
-				setGameStatus('Game started! Your turn.');
+				setGameStatus(gameState.currentTurn === player.socketId ? 'Game started! Your turn.' : 'Game started! Opponent\'s turn.');
 				setIsPlayerTurn(gameState.currentTurn === player.socketId);
 			}
-        });
+		});
 
         socket.on('updateBoard', (newBoard) => {
             setPlayerGuesses(new Map(newBoard.playerGuesses));
@@ -107,9 +110,20 @@ const Game = () => {
 		opponentRandomizeShipsRef.current();
 	}, []);
 
-	const handleReadyUp = () => {
+	const handleReadyUp = async () => {
         setIsPlayerReady(!isPlayerReady);
 		socket.emit('playerReady', gameId, playerShips);
+
+		try {
+			if (player) {
+				await getData(`/game/${gameId}/update`, 'POST', {
+					playerReady: { [player.id]: !isPlayerReady },
+					playerShips: { [player.id]: playerShips },
+				});
+			}
+		} catch (error) {
+			console.error('Error updating game state:', error);
+		}
 
         if (!hasOpponent) {
             setIsOpponentReady(true); // Single-player mode auto-readies opponent
@@ -117,11 +131,12 @@ const Game = () => {
 			setGameStatus('Your turn!');
         } else if (isPlayerReady && isOpponentReady) {
 			// Both players are ready, start the game
+			setGameStatus('Waiting for opponent to ready up...');
 		}
     };
 
 	// Handle player's click on the opponent's board
-	const handleCellClick = (row: string, col: number, hit: boolean) => {
+	const handleCellClick = async (row: string, col: number, hit: boolean) => {
 		const guess = `${row}${col}`;
 
 		if (isPlayerTurn && !playerGuesses.has(guess)) {
@@ -170,7 +185,7 @@ const Game = () => {
 
 	const handleQuit = async () => {
         try {
-            await getData('/game/quit', 'POST', { playerId: player?.id });
+            await getData('/game/quit', 'POST', { playerId: player?.id, gameId });
             socket.emit('quitGame', gameId);
             navigate('/lobby');
         } catch (error) {

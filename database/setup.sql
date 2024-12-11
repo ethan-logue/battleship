@@ -1,3 +1,4 @@
+DROP DATABASE battleship;
 CREATE DATABASE IF NOT EXISTS battleship;
 
 USE battleship;
@@ -9,7 +10,7 @@ CREATE TABLE Player (
     email VARCHAR(100) NOT NULL UNIQUE,
     session_token VARCHAR(255),
     current_lobby_id INT,
-    current_game_id INT,
+    current_game_id VARCHAR(100),
     num_wins INT DEFAULT 0
 );
 
@@ -21,26 +22,31 @@ CREATE TABLE Lobby (
 CREATE TABLE Chat (
     chat_ID INT AUTO_INCREMENT PRIMARY KEY,
     sender_ID INT,
-    game_ID INT,
+    game_ID VARCHAR(100),
     lobby_ID INT,
     message TEXT,
     FOREIGN KEY (sender_ID) REFERENCES Player(player_ID)
 );
 
 CREATE TABLE Game (
-    game_ID INT AUTO_INCREMENT PRIMARY KEY,
+    ID INT AUTO_INCREMENT PRIMARY KEY,
+    game_ID VARCHAR(100) UNIQUE,
     player1_ID INT,
     player2_ID INT,
     current_turn INT,
     winner_ID INT,
     game_status VARCHAR(50),
+    player_ships JSON,
+    opponent_ships JSON,
+    player_guesses JSON,
+    opponent_guesses JSON,
     FOREIGN KEY (player1_ID) REFERENCES Player(player_ID),
     FOREIGN KEY (player2_ID) REFERENCES Player(player_ID)
 );
 
 CREATE TABLE Move (
     move_ID INT AUTO_INCREMENT PRIMARY KEY,
-    game_ID INT,
+    game_ID VARCHAR(100),
     target_position VARCHAR(5),
     is_hit BOOLEAN,
     FOREIGN KEY (game_ID) REFERENCES Game(game_ID)
@@ -48,7 +54,7 @@ CREATE TABLE Move (
 
 CREATE TABLE GameBoard (
     board_ID INT AUTO_INCREMENT PRIMARY KEY,
-    game_ID INT,
+    game_ID VARCHAR(100),
     player_ID INT,
     board_state TEXT,
     FOREIGN KEY (game_ID) REFERENCES Game(game_ID),
@@ -64,3 +70,8 @@ CREATE TABLE Ship (
     is_sunk BOOLEAN,
     FOREIGN KEY (board_ID) REFERENCES GameBoard(board_ID)
 );
+
+INSERT INTO Player (username, password_hash, email, session_token, current_lobby_id, current_game_id, num_wins) VALUES 
+('eml8469', '$2b$10$rbh7uIo40DLLLqmQ7FNMl.IadRR6Ozx0/xNlEeVfk6zdRdYdTUyLm', 'eml8469@rit.edu', NULL, NULL, NULL, 0),
+('admin', '$2b$10$0SLA472NbpnNUAJDPuUlbeo.sfi3/ID5aQ885GHEnMgZasYy7fpIy', 'admin@gmail.com', NULL, NULL, NULL, 0),
+('tester', '$2b$10$sPcaJhdJzZKX/OUvewCnz.atUnjA6NLVz2BcenqaSDNsxTdaDgSgW', 'test@test.com', NULL, NULL, NULL, 0);

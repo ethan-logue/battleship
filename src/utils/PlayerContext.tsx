@@ -1,4 +1,5 @@
-import { createContext, useState, useContext, ReactNode } from 'react';
+import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import socket from './socket';
 
 export interface Player {
     socketId: string;
@@ -6,7 +7,7 @@ export interface Player {
     username: string;
     email: string;
     currentLobbyId?: number | null;
-    currentGameId?: number | null;
+    currentGameId?: string | null;
     num_wins?: number;
 }
 
@@ -19,6 +20,14 @@ const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
 export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const [player, setPlayer] = useState<Player | null>(null);
+
+    useEffect(() => {
+        socket.on('setSocketId', (id, socketId: string) => {
+            if (player && player.id === id) {
+                setPlayer({ ...player, socketId });
+            }
+        });
+    });
 
     return (
         <PlayerContext.Provider value={{ player, setPlayer }}>

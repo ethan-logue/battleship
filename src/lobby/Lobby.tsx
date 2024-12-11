@@ -25,34 +25,43 @@ const Lobby = () => {
             console.log('Updated player list:', playerList);
             setPlayers(playerList);
         });
-
+        
         // If a challenge is received
         socket.on('challengeReceived', (challengerSocketId: string, challenger: Player) => {
             console.log('Challenge received from:', challengerSocketId);
             setChallenger(challenger);
         });
-
+        
         // If a challenge is accepted, redirect to the game
         socket.on('challengeAccepted', (gameId: string) => {
             navigate(`/game/${gameId}`);
         });
-
+        
         return () => {
             socket.off('updateLobbyPlayers');
             socket.off('challengeReceived');
             socket.off('challengeAccepted');
         };
     }, [navigate]);
-
+    
     const sendChallenge = (opponentId: number) => {
         console.log('Sending challenge to:', opponentId);
         socket.emit('sendChallenge', opponentId);
         setChallengeSent(opponentId);
     };
-
-    const handleAcceptChallenge = () => {
-        if (challenger) {
-            socket.emit('acceptChallenge', challenger.socketId);
+    
+    const handleAcceptChallenge = async () => {
+        if (challenger && player) {
+            const gameId = `${player.socketId}-${challenger.socketId}`;
+            console.log('Accepting challenge WITH GAMEID:', challenger, player, gameId);
+            
+            try {
+                await getData('/game/create', 'POST', { player1_ID: challenger.id, player2_ID: player.id, gameId });
+                socket.emit('acceptChallenge', challenger.socketId, gameId);
+                navigate(`/game/${gameId}`);
+            } catch (error) {
+                console.error('Error creating game:', error);
+            }
             setChallenger(null);
         }
     };
@@ -63,10 +72,11 @@ const Lobby = () => {
 
     // Create single player game
     const initGame = async () => {
+        const gameId = `${player?.socketId}`;
         try {
-            const data = await getData('/game/create', 'POST', { player1_ID: player?.id, player2_ID: null });
-            socket.emit('joinGame', data.gameId);
-            navigate(`/game/${data.gameId}`);
+            await getData('/game/create', 'POST', { player1_ID: player?.id, player2_ID: null, gameId });
+            socket.emit('joinGame', gameId);
+            navigate(`/game/${gameId}`);
         } catch (error) {
             console.error('Error creating game:', error);
         }

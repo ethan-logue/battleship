@@ -43,7 +43,7 @@ const Auth = () => {
         if (response.ok) {
             if (!isRegister) {
                 localStorage.setItem('token', result.token);
-                socket.emit('login', result.user.username, result.user.id);
+                socket.emit('login', result.user.username, result.user.id, result.user.email, result.token);
                 setPlayer(result.user);
                 navigate('/lobby');
             } else {

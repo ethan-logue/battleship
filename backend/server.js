@@ -5,6 +5,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import { logoutUser } from './api/auth.js';
+import axios from 'axios';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3000;
+const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
 app.use(cors({
     origin: "http://localhost:5173",
@@ -43,9 +45,10 @@ io.on('connection', (socket) => {
     console.log('a user connected:', socket.id);
 
     // Handle user login
-    socket.on('login', (username, userId) => {
-        players.push({ socketId: socket.id, username, id: userId, currentGameId: null, });
+    socket.on('login', (username, userId, email, token) => {
+        players.push({ socketId: socket.id, username, id: userId, email, currentGameId: null, token });
         io.emit('updateLobbyPlayers', players);
+        io.emit('setSocketId', userId, socket.id);
     });
 
     // Handle chat messages
@@ -61,20 +64,27 @@ io.on('connection', (socket) => {
 
     // Handle challenges
     socket.on('sendChallenge', (opponentId) => {
-        console.log(`Challenge sent from ${socket.id} to ${opponentId}`);
         const challenger = players.find((p) => p.id === opponentId);
+        console.log(`Challenge sent from ${socket.id} to ${challenger.socketId}`);
         io.to(challenger.socketId).emit('challengeReceived', socket.id, players.find((p) => p.socketId === socket.id));
     });
 
     // Handle challenge acceptance
-    socket.on('acceptChallenge', (challengerSocketId) => {
-        console.log(`Challenge accepted by ${socket.id} from ${challengerSocketId}`);
-        const gameId = `${socket.id}-${challengerSocketId}`;
+    socket.on('acceptChallenge', (challengerSocketId, gameId) => {
+        const player1 = players.find((p) => p.socketId === socket.id);
+        const player2 = players.find((p) => p.socketId === challengerSocketId);
+        console.log(`Challenge accepted by ${player1.username} from ${player2.username}`);
+
+        if (!player1 || !player2) {
+            console.error('Player not found');
+            return;
+        }
+    
         games[gameId] = {
-            players: [socket.id, challengerSocketId],
-            playerReady: { [socket.id]: false, [challengerSocketId]: false },
-            playerShips: { [socket.id]: [], [challengerSocketId]: [] },
-            currentTurn: socket.id,
+            players: [player1.id, player2.id],
+            playerReady: { [player1.id]: false, [player2.id]: false },
+            playerShips: { [player1.id]: [], [player2.id]: [] },
+            currentTurn: player1.id,
         };
 
         // Update players' current game ID
@@ -85,6 +95,7 @@ io.on('connection', (socket) => {
             return player;
         });
 
+        io.emit('hasOpponent', true);
         io.emit('updateLobbyPlayers', players);
         io.to(socket.id).emit('challengeAccepted', gameId);
         io.to(challengerSocketId).emit('challengeAccepted', gameId);
@@ -92,9 +103,11 @@ io.on('connection', (socket) => {
 
     // Handle player ready
     socket.on('playerReady', (gameId, ships) => {
+        const player1 = players.find((p) => p.socketId === socket.id);
+
         if (games[gameId]) {
-            games[gameId].playerReady[socket.id] = true;
-            games[gameId].playerShips[socket.id] = ships;
+            games[gameId].playerReady[player1.id] = true;
+            games[gameId].playerShips[player1.id] = ships;
             io.to(gameId).emit('updateGameState', games[gameId]);
 
             // Check if both players are ready
@@ -108,11 +121,13 @@ io.on('connection', (socket) => {
     // Handle making a move
     socket.on('makeMove', (gameId, guess) => {
         if (games[gameId]) {
-            const opponentId = games[gameId].players.find((id) => id !== socket.id);
+            const player1 = players.find((p) => p.socketId === socket.id);
+            const opponentId = games[gameId].players.find((id) => id !== player1.id);
+
             const { hit, sunk, ship } = isShipHit(guess, games[gameId].playerShips[opponentId], 1);
 
             io.to(gameId).emit('updateBoard', {
-                playerGuesses: { [socket.id]: guess },
+                playerGuesses: { [player1.id]: guess },
                 opponentGuesses: { [opponentId]: guess },
                 isPlayerTurn: opponentId,
             });
@@ -120,13 +135,13 @@ io.on('connection', (socket) => {
             if (sunk) {
                 const allSunk = games[gameId].playerShips[opponentId].every((s) => s.isSunk);
                 if (allSunk) {
-                    io.to(gameId).emit('gameOver', socket.id);
+                    io.to(gameId).emit('gameOver', player1.id);
                 }
             }
         }
     });
 
-    // Handle joining a game
+    // Handle joining a game (single player)
     socket.on('joinGame', (gameId) => {
         console.log(`Player joined game: ${gameId}`);
         players = players.map((player) => {
@@ -135,6 +150,7 @@ io.on('connection', (socket) => {
             }
             return player;
         });
+        io.emit('hasOpponent', false);
         io.emit('updateLobbyPlayers', players);
     });
 
@@ -157,10 +173,10 @@ io.on('connection', (socket) => {
 
     // Handle logout
     socket.on('logout', (id) => {
-        console.log(`Player logged out: ${id}`);
-
+        
         // Find the player in the players array
         const player = players.find((p) => p.id === id);
+        console.log(`Player logged out: ${player.username}`);
 
         if (player) {
             // Remove the player from the players array
