@@ -1,13 +1,13 @@
-import './Game.css';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { isShipHit, randomMove } from './GameLogic';
 import { ShipProps } from '../components/Ship';
-import { getData } from '../utils/apiUtils';
 import { usePlayer } from '../utils/PlayerContext';
+import { getData } from '../utils/apiUtils';
 import GameBoard from './board/GameBoard';
 import Chat from '../components/Chat';
 import socket from '../utils/socket';
+import './Game.css';
 
 const Game = () => {
 	const { gameId } = useParams<{ gameId: string }>();

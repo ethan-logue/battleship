@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import './GameBoard.css';
-import Ship, { ShipProps } from '../../components/Ship';
 import { getOccupiedCells, isValidPlacement } from './BoardLogic';
 import { isShipHit } from '../GameLogic';
+import Ship, { ShipProps } from '../../components/Ship';
+import './GameBoard.css';
 
 interface GameBoardProps {
     cellSize: number;

@@ -9,15 +9,15 @@
     width: 100%;
     padding: 1.25rem 1.75rem;
     border-radius: 8px;
-    border: 2px solid #508497;
-    color: #8db5c3;
+    border: 2px solid var(--secondary);
+    color: var(--secondary);
     font-size: 1rem;
     background: none;
     position: relative;
     
     &:focus {
         outline: none;
-        border-color: #8db5c3;
+        border-color: var(--secondary);
     }
 }
 
@@ -27,7 +27,7 @@
     left: 1.8rem;
     transform: translateY(-50%);
     font-size: 1rem;
-    color: #508497;
+    color: var(--secondary);
     transition: all 0.3s ease-in-out;
     pointer-events: none;
 }
@@ -65,7 +65,7 @@
     bottom: 1rem;
     right: 1rem;
     width: 300px;
-    background: #12252b;
+    background: var(--primary);
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     display: flex;
@@ -83,7 +83,7 @@
 
 .messages div {
     word-break: break-all;
-    color: #8db5c3;
+    color: var(--secondary);
 }
 
 .messages div:not(:last-child) {
@@ -92,14 +92,14 @@
 
 .msg-sender {
     font-weight: 600;
-    color: #508497;
+    color: var(--secondary);
 }
 
 .send-msg {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid #508497;
+    border-top: 1px solid var(--secondary);
 }
 
 .send-msg input {
@@ -107,27 +107,27 @@
     padding: 0.75rem 1rem;
     border: none;
     outline: none;
-    color: #8db5c3;
-    background: #12252b;
+    color: var(--secondary);
+    background: var(--primary);
     border-bottom-left-radius: 8px;
 }
 
 .send-msg input::placeholder {
-    color: #508497;
+    color: var(--secondary);
 }
 
 .send-msg button {
     appearance: none;
     border: none;
-    background: #508497;
-    color: #12252b;
+    background: var(--secondary);
+    color: var(--primary);
     padding: 0.75rem;
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     border-bottom-right-radius: 8px;
 
-    background-image: linear-gradient(90deg, #8db5c3 50%, transparent 50%);
+    background-image: linear-gradient(90deg, var(--accent) 50%, transparent 50%);
     background-position: right;
     background-size: 200% 100%;
     transition: background-position 0.15s ease-out;
@@ -145,7 +145,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     width: 300px;
-    background: #12252b;
+    background: var(--primary);
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     display: flex;
@@ -168,8 +168,8 @@
     flex: 1;
     appearance: none;
     border: none;
-    background: #508497;
-    color: #12252b;
+    background: var(--secondary);
+    color: var(--primary);
     padding: 0.5rem 0.75rem;
     font-size: 0.9rem;
     font-weight: 600;

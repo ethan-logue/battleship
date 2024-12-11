@@ -43,7 +43,7 @@
     width: 100%;
     max-width: 400px;
     background: #12252bd9;
-    color: #8db5c3;
+    color: var(--secondary);
     padding: 2rem;
     border-radius: 16px;
     box-shadow: 0px 5px 12px 0px rgb(0 0 0 / 50%);
@@ -88,7 +88,7 @@
 }
 
 .auth-toggle {
-    color: #8db5c3;
+    color: var(--secondary);
     background: none;
     position: relative;
     padding-bottom: 0.2rem;
@@ -101,7 +101,7 @@
         transform: scaleX(0);
         bottom: 0;
         left: 0;
-        background: #8db5c3;
+        background: var(--secondary);
         transition: transform 0.3s ease-in-out;
         transform-origin: bottom right;
     }
@@ -115,13 +115,13 @@
 }
 
 .auth-submit {
-    background-color: #508497;
-    color: #12252b;
+    background-color: var(--secondary);
+    color: var(--primary);
     padding: 0.5rem 1rem;
     border-radius: 0.25rem;
     font-size: 1rem;
     font-weight: 600;
-    background-image: linear-gradient(to top, #8db5c3 50%, transparent 50%);
+    background-image: linear-gradient(to top, var(--accent) 50%, transparent 50%);
     background-position: top;
     background-size: 100% 200%;
     transition: background-position 0.15s ease-out;

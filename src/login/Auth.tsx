@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Auth.css';
-import AuthFormGroup from '../components/AuthFormGroup';
 import { usePlayer } from '../utils/PlayerContext';
 import { baseUrl } from '../utils/apiUtils';
+import AuthFormGroup from '../components/AuthFormGroup';
 import socket from '../utils/socket';
+import './Auth.css';
 
 const Auth = () => {
     const [isRegister, setIsRegister] = useState(false);

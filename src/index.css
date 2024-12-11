@@ -1,5 +1,8 @@
 :root {
 	color-scheme: dark;
+	--primary: #12252b;
+	--secondary: #508497;
+	--accent: #8db5c3;
 }
 
 * {

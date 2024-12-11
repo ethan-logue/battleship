@@ -1,10 +1,9 @@
-import './App.css'
 import { BrowserRouter as Router, Route, Routes, Navigate  } from 'react-router-dom';
+import { PlayerProvider } from './utils/PlayerContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import Auth from './login/Auth';
 import Lobby from './lobby/Lobby';
 import Game from './game/Game';
-import { PlayerProvider } from './utils/PlayerContext';
-import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
     return (

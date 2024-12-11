@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Chat from '../components/Chat';
 import { Player, usePlayer } from '../utils/PlayerContext';
 import { getData } from '../utils/apiUtils';
-import socket from '../utils/socket';
 import ChallengePopup from '../components/ChallengePopup';
+import Chat from '../components/Chat';
+import socket from '../utils/socket';
 
 
 const Lobby = () => {
