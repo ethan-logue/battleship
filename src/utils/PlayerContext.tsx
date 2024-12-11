@@ -1,11 +1,12 @@
 import { createContext, useState, useContext, ReactNode } from 'react';
 
 export interface Player {
+    socketId: string;
     id: number;
     username: string;
     email: string;
-    current_lobby_id?: number | null;
-    current_game_id?: number | null;
+    currentLobbyId?: number | null;
+    currentGameId?: number | null;
     num_wins?: number;
 }
 

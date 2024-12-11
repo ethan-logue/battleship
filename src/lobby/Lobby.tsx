@@ -2,19 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Chat from '../components/Chat';
 import { Player, usePlayer } from '../utils/PlayerContext';
-import { baseUrl, getData } from '../utils/apiUtils';
-import { io } from 'socket.io-client';
-import { getToken } from '../utils/tokenUtils';
+import { getData } from '../utils/apiUtils';
+import socket from '../utils/socket';
+import ChallengePopup from '../components/ChallengePopup';
 
-const socket = io(baseUrl, {
-    auth: {
-        token: getToken(),
-    },
-});
 
 const Lobby = () => {
     const [players, setPlayers] = useState<Player[]>([]);
     const [challengeSent, setChallengeSent] = useState<number | null>(null);
+    const [challenger, setChallenger] = useState<Player | null>();
     const navigate = useNavigate();
 
     const { player, setPlayer } = usePlayer();
@@ -26,16 +22,14 @@ const Lobby = () => {
             .catch((error) => console.error('Error fetching players:', error));
 
         socket.on('updateLobbyPlayers', (playerList: Player[]) => {
-            console.log('Received updated player list:', playerList);
-            
+            console.log('Updated player list:', playerList);
             setPlayers(playerList);
         });
 
         // If a challenge is received
-        socket.on('challengeReceived', (challengerId: number) => {
-            if (window.confirm('You have been challenged! Do you accept?')) {
-                socket.emit('acceptChallenge', challengerId);
-            }
+        socket.on('challengeReceived', (challengerSocketId: string, challenger: Player) => {
+            console.log('Challenge received from:', challengerSocketId);
+            setChallenger(challenger);
         });
 
         // If a challenge is accepted, redirect to the game
@@ -51,13 +45,36 @@ const Lobby = () => {
     }, [navigate]);
 
     const sendChallenge = (opponentId: number) => {
+        console.log('Sending challenge to:', opponentId);
         socket.emit('sendChallenge', opponentId);
         setChallengeSent(opponentId);
     };
 
+    const handleAcceptChallenge = () => {
+        if (challenger) {
+            socket.emit('acceptChallenge', challenger.socketId);
+            setChallenger(null);
+        }
+    };
+
+    const handleRejectChallenge = () => {
+        setChallenger(null);
+    };
+
+    // Create single player game
+    const initGame = async () => {
+        try {
+            const data = await getData('/game/create', 'POST', { player1_ID: player?.id, player2_ID: null });
+            socket.emit('joinGame', data.gameId);
+            navigate(`/game/${data.gameId}`);
+        } catch (error) {
+            console.error('Error creating game:', error);
+        }
+    };
+
     const handleLogout = async () => {
         try {
-            await getData('/auth/logout', 'POST');
+            await getData('/auth/logout', 'POST', { playerId: player?.id });
             socket.emit('logout', player?.id);
             localStorage.removeItem('token');
             setPlayer(null);
@@ -67,25 +84,15 @@ const Lobby = () => {
         }
     };
 
-    // Create single player game
-    const initGame = async () => {
-        try {
-            const data = await getData('/game/create', 'POST', { player1_ID: player?.id, player2_ID: null });
-            navigate(`/game/${data.gameId}`);
-        } catch (error) {
-            console.error('Error creating game:', error);
-        }
-    };
-
     return (
         <div className="lobby-container">
             <button onClick={handleLogout}>Log out</button>
             <h1>Lobby</h1>
             <ul>
-                {players.map((p) => (
+                {players.filter(p => !p.currentGameId).map((p) => (
                     <li key={p.id}>
                         {p.username}
-                        {player && p.id !== player.id && (
+                        {player?.id !== p.id && (
                             challengeSent === p.id ? (
                                 <button disabled>Challenge Sent</button>
                             ) : (
@@ -97,6 +104,13 @@ const Lobby = () => {
             </ul>
             <button onClick={initGame}>Play</button>
             <Chat socket={socket} room="lobby" />
+            {challenger && (
+                <ChallengePopup
+                    challenger={challenger}
+                    onAccept={handleAcceptChallenge}
+                    onReject={handleRejectChallenge}
+                />
+            )}
         </div>
     );
 };

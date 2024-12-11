@@ -1,28 +1,20 @@
-import io from 'socket.io-client';
-import Chat from '../components/Chat';
-import { useEffect, useRef, useState } from 'react';
-import GameBoard from './board/GameBoard';
 import './Game.css';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { isShipHit, randomMove } from './GameLogic';
 import { ShipProps } from '../components/Ship';
-import { useNavigate, useParams } from 'react-router-dom';
-import { baseUrl, getData } from '../utils/apiUtils';
-import { getToken } from '../utils/tokenUtils';
+import { getData } from '../utils/apiUtils';
 import { usePlayer } from '../utils/PlayerContext';
-
-const socket = io(baseUrl, {
-    auth: {
-        token: getToken(),
-    },
-});
+import GameBoard from './board/GameBoard';
+import Chat from '../components/Chat';
+import socket from '../utils/socket';
 
 const Game = () => {
-
 	const { gameId } = useParams<{ gameId: string }>();
 	const { player } = usePlayer();
 	const navigate = useNavigate();
 
-	const hasOpponent = false; // TODO: pass in single player or multiplayer from lobby, false is single player
+	const hasOpponent = false; 
 
 	// Initial game setup
 	const numRowsCols = 10;
@@ -52,7 +44,23 @@ const Game = () => {
 	}
 
 	useEffect(() => {
-        socket.emit('joinGame', gameId);
+        // socket.emit('joinGame', gameId, player?.socketId);
+
+		socket.on('updateGameState', (gameState) => {
+			if (player) {
+				setIsPlayerReady(gameState.playerReady[player.socketId]);
+				setIsOpponentReady(gameState.playerReady[gameState.players.find((id: string) => id !== player.socketId)]);
+				setPlayerShips(gameState.playerShips[player.socketId]);
+				setOpponentShips(gameState.playerShips[gameState.players.find((id: string) => id !== player.socketId)]);
+			}
+        });
+
+		socket.on('startGame', (gameState) => {
+			if (player) {
+				setGameStatus('Game started! Your turn.');
+				setIsPlayerTurn(gameState.currentTurn === player.socketId);
+			}
+        });
 
         socket.on('updateBoard', (newBoard) => {
             setPlayerGuesses(new Map(newBoard.playerGuesses));
@@ -69,10 +77,12 @@ const Game = () => {
         });
 
         return () => {
+            socket.off('updateGameState');
+            socket.off('startGame');
             socket.off('updateBoard');
             socket.off('gameOver');
         };
-    }, [gameId]);
+	}, [gameId, player]);
 
 	// Calculate cell size based on window width
 	function calculateCellSize(width: number) {
@@ -99,7 +109,7 @@ const Game = () => {
 
 	const handleReadyUp = () => {
         setIsPlayerReady(!isPlayerReady);
-		socket.emit('playerReady', gameId);
+		socket.emit('playerReady', gameId, playerShips);
 
         if (!hasOpponent) {
             setIsOpponentReady(true); // Single-player mode auto-readies opponent
@@ -121,7 +131,7 @@ const Game = () => {
 
 			setIsPlayerTurn(false);
 			setGameStatus('Opponent\'s turn...');
-			socket.emit('makeMove', { gameId, guess, hit });
+			socket.emit('makeMove', gameId, guess);
 		}
     };
 

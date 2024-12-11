@@ -4,9 +4,7 @@ import './Auth.css';
 import AuthFormGroup from '../components/AuthFormGroup';
 import { usePlayer } from '../utils/PlayerContext';
 import { baseUrl } from '../utils/apiUtils';
-import { io } from 'socket.io-client';
-
-const socket = io(baseUrl);
+import socket from '../utils/socket';
 
 const Auth = () => {
     const [isRegister, setIsRegister] = useState(false);

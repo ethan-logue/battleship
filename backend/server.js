@@ -37,13 +37,15 @@ app.use('/api/lobby', lobbyRoutes);
 app.use('/api/game', gameRoutes);
 
 let players = [];
+let games = {};
 
 io.on('connection', (socket) => {
     console.log('a user connected:', socket.id);
 
     // Handle user login
     socket.on('login', (username, userId) => {
-        players.push({ socketId: socket.id, username, id: userId });
+        players.push({ socketId: socket.id, username, id: userId, currentGameId: null, });
+        console.log('Player logged in:', { socketId: socket.id, username, id: userId, currentGameId: null });
         io.emit('updateLobbyPlayers', players);
     });
 
@@ -60,20 +62,98 @@ io.on('connection', (socket) => {
 
     // Handle challenges
     socket.on('sendChallenge', (opponentId) => {
-        io.to(opponentId).emit('challengeReceived', socket.id);
+        console.log(`Challenge sent from ${socket.id} to ${opponentId}`);
+        const challenger = players.find((p) => p.id === opponentId);
+        io.to(challenger.socketId).emit('challengeReceived', socket.id, players.find((p) => p.socketId === socket.id));
     });
 
     // Handle challenge acceptance
-    socket.on('acceptChallenge', (opponentId) => {
-        const gameId = `${socket.id}-${opponentId}`;
+    socket.on('acceptChallenge', (challengerSocketId) => {
+        console.log(`Challenge accepted by ${socket.id} from ${challengerSocketId}`);
+        const gameId = `${socket.id}-${challengerSocketId}`;
+        games[gameId] = {
+            players: [socket.id, challengerSocketId],
+            playerReady: { [socket.id]: false, [challengerSocketId]: false },
+            playerShips: { [socket.id]: [], [challengerSocketId]: [] },
+            currentTurn: socket.id,
+        };
+
+        // Update players' current game ID
+        players = players.map((player) => {
+            if (player.socketId === socket.id || player.socketId === challengerSocketId) {
+                return { ...player, currentGameId: gameId };
+            }
+            return player;
+        });
+
+        io.emit('updateLobbyPlayers', players);
         io.to(socket.id).emit('challengeAccepted', gameId);
-        io.to(opponentId).emit('challengeAccepted', gameId);
+        io.to(challengerSocketId).emit('challengeAccepted', gameId);
+    });
+
+    // Handle player ready
+    socket.on('playerReady', (gameId, ships) => {
+        if (games[gameId]) {
+            games[gameId].playerReady[socket.id] = true;
+            games[gameId].playerShips[socket.id] = ships;
+            io.to(gameId).emit('updateGameState', games[gameId]);
+
+            // Check if both players are ready
+            const allReady = Object.values(games[gameId].playerReady).every((ready) => ready);
+            if (allReady) {
+                io.to(gameId).emit('startGame', games[gameId]);
+            }
+        }
+    });
+
+    // Handle making a move
+    socket.on('makeMove', (gameId, guess) => {
+        if (games[gameId]) {
+            const opponentId = games[gameId].players.find((id) => id !== socket.id);
+            const { hit, sunk, ship } = isShipHit(guess, games[gameId].playerShips[opponentId], 1);
+
+            io.to(gameId).emit('updateBoard', {
+                playerGuesses: { [socket.id]: guess },
+                opponentGuesses: { [opponentId]: guess },
+                isPlayerTurn: opponentId,
+            });
+
+            if (sunk) {
+                const allSunk = games[gameId].playerShips[opponentId].every((s) => s.isSunk);
+                if (allSunk) {
+                    io.to(gameId).emit('gameOver', socket.id);
+                }
+            }
+        }
+    });
+
+    // Handle joining a game
+    socket.on('joinGame', (gameId) => {
+        console.log(`Player joined game: ${gameId}`);
+        players = players.map((player) => {
+            if (player.socketId === socket.id) {
+                return { ...player, currentGameId: gameId };
+            }
+            return player;
+        });
+        io.emit('updateLobbyPlayers', players);
     });
 
     // Handle quitting the game
     socket.on('quitGame', (gameId) => {
         console.log(`Player quit game: ${gameId}`);
         io.to(gameId).emit('gameOver', 'quit');
+
+        // Update players' current game ID
+        players = players.map((player) => {
+            if (player.currentGameId == gameId && player.socketId === socket.id) {
+                return { ...player, currentGameId: null };
+            }
+            return player;
+        });
+
+        io.emit('updateLobbyPlayers', players);
+        delete games[gameId];
     });
 
     // Handle logout
