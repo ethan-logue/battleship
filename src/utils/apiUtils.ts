@@ -1,6 +1,6 @@
 import { getToken } from "./tokenUtils";
 
-export const baseUrl = '.';
+export const baseUrl = process.env.REACT_APP_BASE_URL;
 
 export const getData = async (endpoint: string, method: string = 'GET', body: unknown = null) => {
     const url = `${baseUrl}/api${endpoint}`;
