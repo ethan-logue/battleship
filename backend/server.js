@@ -32,10 +32,12 @@ app.use(bodyParser.json());
 import authRoutes from './api/auth.js';
 import lobbyRoutes from './api/lobby.js';
 import gameRoutes from './api/game.js';
+import chatRoutes from './api/chat.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/lobby', lobbyRoutes);
 app.use('/api/game', gameRoutes);
+app.use('/api/chat', chatRoutes);
 
 let players = [];
 let games = {};

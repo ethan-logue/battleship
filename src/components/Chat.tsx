@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 import { usePlayer } from '../utils/PlayerContext';
+import { getData } from '../utils/apiUtils';
 import './Components.css';
 
 interface ChatProps {
@@ -30,13 +31,25 @@ const Chat = ({ socket, room }: ChatProps) => {
         };
     }, [room, socket]);
 
-    const sendMessage = () => {
+    const sendMessage = async () => {
         if (msg.trim() && player) {
             socket.emit('sendMessage', { 
                 room,
                 message: msg,
                 username: player.username 
             });
+
+            // Store the message in the database
+            try {
+                await getData('/chat', 'POST', {
+                    senderId: player.id,
+                    gameId: room,
+                    message: msg
+                });
+            } catch (error) {
+                console.error('Error storing message:', error);
+            }
+
             setMsg('');
         }
     };

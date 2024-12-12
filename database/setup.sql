@@ -23,8 +23,8 @@ CREATE TABLE Chat (
     chat_ID INT AUTO_INCREMENT PRIMARY KEY,
     sender_ID INT,
     game_ID VARCHAR(100),
-    lobby_ID INT,
     message TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_ID) REFERENCES Player(player_ID)
 );
 
