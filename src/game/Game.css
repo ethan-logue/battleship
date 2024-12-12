@@ -49,6 +49,8 @@
 .board-hint {
 	color: var(--secondary);
 	margin-top: 0.5rem;
+	text-align: center;
+	font-size: 0.9rem;
 }
 
 .game-btns {
