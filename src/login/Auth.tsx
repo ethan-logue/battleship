@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayer } from '../utils/PlayerContext';
-import { baseUrl } from '../utils/apiUtils';
+import { getData } from '../utils/apiUtils';
 import AuthFormGroup from '../components/AuthFormGroup';
 import socket from '../utils/socket';
 import './Auth.css';
@@ -10,9 +10,46 @@ const Auth = () => {
     const [isRegister, setIsRegister] = useState(false);
     const [formData, setFormData] = useState({ username: '', email: '', password: '' });
     const [message, setMessage] = useState('');
+
     const navigate = useNavigate();
-    
+    const [token, setToken] = useState('');
     const { setPlayer } = usePlayer();
+    
+
+    useEffect(() => {
+        // Fetch the nonce when the page loads
+        const fetchToken = async () => {
+            try {
+                const result = await getData('/auth/token');
+                setToken(result.nonce);
+            } catch (error) {
+                console.error('Error fetching nonce:', error);
+            }
+        };
+
+        fetchToken();
+
+        // Check the token on page load
+        const checkToken = async () => {
+            const storedToken = localStorage.getItem('token');
+            if (storedToken) {
+                try {
+                    const result = await getData('/auth/validateToken', 'POST', { token: storedToken });
+                    if (result.user) {
+                        setPlayer(result.user);
+                        navigate('/lobby');
+                    } else {
+                        localStorage.removeItem('token');
+                    }
+                } catch (error) {
+                    console.error('Error validating token:', error);
+                    localStorage.removeItem('token');
+                }
+            }
+        };
+
+        checkToken();
+    }, [navigate, setPlayer]);
 
     const toggleForm = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
@@ -30,17 +67,10 @@ const Auth = () => {
             setMessage('Please fill in all fields');
             return;
         }
-        const url = isRegister ? `${baseUrl}/api/auth/register` : `${baseUrl}/api/auth/login`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-        });
+        const url = isRegister ? '/auth/register' : '/auth/login';
+        const result = await getData(url, 'POST', { ...formData, token });
 
-        const result = await response.json();
-        if (response.ok) {
+        if (result.token) {
             if (!isRegister) {
                 localStorage.setItem('token', result.token);
                 socket.emit('login', result.user.username, result.user.id, result.user.email, result.token);

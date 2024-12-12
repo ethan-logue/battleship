@@ -46,6 +46,11 @@
 	margin-bottom: 0.5rem;
 }
 
+.board-hint {
+	color: var(--secondary);
+	margin-top: 0.5rem;
+}
+
 .game-btns {
 	display: flex;
 	justify-content: center;

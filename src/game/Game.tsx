@@ -264,6 +264,8 @@ const Game = () => {
 						playerReady={isPlayerReady}
 						updateShips={setPlayerShips}
 					/>
+
+					<p className='board-hint'>Press 'R' while dragging a ship to rotate it!</p>
 					
 					<div className='game-btns'>
 						<button onClick={handleQuit}>Quit Game</button>

@@ -3,8 +3,17 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import connection from '../connection.js';
 import authenticateToken from '../utils/authToken.js';
+import { generateToken, validateToken } from '../utils/nonceUtils.js';
 
 const router = express.Router();
+
+// Generate a nonce
+router.get('/token', (req, res) => {
+    const ip = req.ip;
+    const userAgent = req.headers['user-agent'];
+    const token = generateToken(ip, userAgent);
+    res.status(200).json({ token });
+});
 
 // Login route
 router.post('/login', (req, res) => {
@@ -28,10 +37,10 @@ router.post('/login', (req, res) => {
                 return res.status(401).json({ error: 'Invalid email or password' });
             }
 
-            const token = jwt.sign({ id: user.player_ID }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            const token = generateToken(req.ip, req.headers['user-agent']);
             
-            const updateQuery = 'UPDATE Player SET current_lobby_id = ? WHERE player_ID = ?';
-            connection.query(updateQuery, [1, user.player_ID], (updateErr) => {
+            const updateQuery = 'UPDATE Player SET current_lobby_id = ?, session_token = ? WHERE player_ID = ?';
+            connection.query(updateQuery, [1, token, user.player_ID], (updateErr) => {
                 if (updateErr) {
                     return res.status(500).json({ error: 'Database error' });
                 }
@@ -43,7 +52,14 @@ router.post('/login', (req, res) => {
 
 // Register route
 router.post('/register', (req, res) => {
-    const { username, email, password } = req.body;
+    const { username, email, password, nonce } = req.body;
+
+    try {
+        validateToken(nonce, req.ip, req.headers['user-agent']);
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+
     const hashedPassword = bcrypt.hashSync(password, 10);
     const query = 'INSERT INTO Player (username, email, password_hash) VALUES (?, ?, ?)';
 
@@ -52,6 +68,29 @@ router.post('/register', (req, res) => {
             return res.status(500).json({ error: 'Database error' });
         }
         res.status(201).json({ message: 'User registered successfully' });
+    });
+});
+
+// Validate token
+router.post('/validateToken', (req, res) => {
+    const { token } = req.body;
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) {
+            return res.status(403).json({ error: 'Invalid token' });
+        }
+
+        const query = 'SELECT * FROM Player WHERE player_ID = ?';
+        connection.query(query, [user.id], (err, results) => {
+            if (err) {
+                return res.status(500).json({ error: 'Database error' });
+            }
+            if (results.length === 0) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            res.status(200).json({ user: results[0] });
+        });
     });
 });
 
