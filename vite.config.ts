@@ -15,5 +15,8 @@ export default defineConfig(({ mode }) => {
       'process.env.REACT_APP_BASE_URL': JSON.stringify(env.REACT_APP_BASE_URL)
     },
     plugins: [react()],
+    build: {
+      outDir: 'dist'
+    }
   }
 })
