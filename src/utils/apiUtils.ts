@@ -1,6 +1,6 @@
 import { getToken } from "./tokenUtils";
 
-export const baseUrl = 'http://localhost:3000';
+export const baseUrl = '.';
 
 export const getData = async (endpoint: string, method: string = 'GET', body: unknown = null) => {
     const url = `${baseUrl}/api${endpoint}`;
