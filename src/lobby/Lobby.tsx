@@ -56,7 +56,7 @@ const Lobby = () => {
     
     const handleAcceptChallenge = async () => {
         if (challenger && player) {
-            const gameId = `${player.socketId}-${challenger.socketId}`;
+            const gameId = `${player.socketId}-${challenger.socketId}-${Math.random().toString(36).slice(2, 9)}`;
             try {
                 await getData('/game/create', 'POST', { player1_ID: challenger.id, player2_ID: player.id, gameId });
                 socket.emit('acceptChallenge', challenger.socketId, gameId);
@@ -77,7 +77,7 @@ const Lobby = () => {
 
     // Create single player game
     const initGame = async () => {
-        const gameId = `${player?.socketId}`;
+        const gameId = `${player?.socketId}-${Math.random().toString(36).slice(2, 9)}`;
         try {
             await getData('/game/create', 'POST', { player1_ID: player?.id, player2_ID: null, gameId });
             socket.emit('joinGame', gameId);
