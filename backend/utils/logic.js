@@ -1,20 +1,27 @@
-import { getAvailableCells, getOccupiedCells } from "./board/BoardLogic";
-import { ShipProps } from "../components/Ship";
+/**
+ * Get all occupied cells for a given ship.
+ */
+export const getOccupiedCells = (x, y, length, isVertical) => {
+    const cells = [];
+    for (let i = 0; i < length; i++) {
+        const cellX = isVertical ? x : x + i;
+        const cellY = isVertical ? y + i : y;
+        cells.push(`${cellX},${cellY}`);
+    }
+    return cells;
+};
 
 /**
  * Check if a guess hits any ship.
  */
-export const isShipHit = (guess: string, ships: ShipProps[], boardMargin: number): { hit: boolean; sunk: boolean; ship?: ShipProps } => {
-    // Find the ship that was hit
+export const isShipHit = (guess, ships, boardMargin) => {
     const hitShip = ships.find((ship) =>
         getOccupiedCells(ship.x, ship.y, ship.length, ship.isVertical, boardMargin).includes(guess)
     );
 
     if (hitShip) {
-        // Add the guess to the ship's hits
         hitShip.hits.add(guess);
 
-        // Check if the ship is sunk
         const occupiedCells = getOccupiedCells(hitShip.x, hitShip.y, hitShip.length, hitShip.isVertical, boardMargin);
         const sunk = occupiedCells.every((cell) => hitShip.hits.has(cell));
 
@@ -27,10 +34,7 @@ export const isShipHit = (guess: string, ships: ShipProps[], boardMargin: number
 /**
  * Generate a random valid move for the opponent.
  */
-export const randomMove = (
-    numRowsCols: number,
-    guesses: Map<string, 'hit' | 'miss'>
-): string | null => {
+export const randomMove = ( numRowsCols, guesses ) => {
     const availableCells = getAvailableCells(numRowsCols, numRowsCols, guesses);
 
     const remainingCells = availableCells.filter((cell) => !guesses.has(cell));

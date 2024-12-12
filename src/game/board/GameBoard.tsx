@@ -1,6 +1,5 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getOccupiedCells, isValidPlacement } from './BoardLogic';
-import { isShipHit } from '../GameLogic';
 import Ship, { ShipProps } from '../../components/Ship';
 import './GameBoard.css';
 
@@ -9,11 +8,12 @@ interface GameBoardProps {
     numRowsCols?: number;
     ships?: ShipProps[];
     randomizeShipsCallback?: React.MutableRefObject<() => void>;
-    onCellClick?: (row: string, col: number, hit: boolean) => void;
+    onCellClick?: (row: string, col: number) => void;
     playerGuesses: Map<string, 'hit' | 'miss'>;
     playerReady?: boolean;
     updateShips: (ships: ShipProps[]) => void;
     classes?: string;
+    gameId?: string;
 }
 
 const GameBoard = React.memo(({
@@ -38,64 +38,60 @@ const GameBoard = React.memo(({
 
     const [ships, setShips] = useState<ShipProps[]>(initialShips);
 
+    useEffect(() => {
+        updateShips(ships);
+    }, [ships, updateShips]);
+
     // Expose randomizeShips function to Game.tsx
     if (randomizeShipsCallback) { 
         randomizeShipsCallback.current = () => {
-            const occupiedCells = new Set<string>(); // Track all occupied cells during randomization
-        
+            const occupiedCells = new Set<string>(); // Track occupied cells
+    
             const randomShips = ships.map((ship) => {
                 let x, y, isVertical, valid;
-        
+    
                 do {
                     x = Math.floor(Math.random() * cols) + boardMargin;
                     y = Math.floor(Math.random() * rows) + boardMargin;
                     isVertical = Math.random() < 0.5;
-                    valid = isValidPlacement(x, y, ship.length, isVertical, ship.name, ships, boardMargin, rows, cols, occupiedCells);
+                    valid = isValidPlacement(
+                        x,
+                        y,
+                        ship.length,
+                        isVertical,
+                        ship.name,
+                        ships,
+                        boardMargin,
+                        rows,
+                        cols,
+                        occupiedCells
+                    );
                 } while (!valid);
-        
-                // Mark the new cells as occupied
+    
                 const newCells = getOccupiedCells(x, y, ship.length, isVertical);
                 newCells.forEach((cell) => occupiedCells.add(cell));
-
+    
                 return { ...ship, x, y, isVertical };
             });
-        
+    
             setShips(randomShips);
         };
     }
     
     // Handle ship placement on the game board
-    const handleShipPlacement = (name: string, x: number, y: number, isVertical: boolean) => {
+    const handleShipPlacement = useCallback((name: string, x: number, y: number, isVertical: boolean) => {
         const ship = ships.find((s) => s.name === name);
         if (!ship) return false;
-    
+
         if (isValidPlacement(x, y, ship.length, isVertical, name, ships, boardMargin, rows, cols)) {
             const updatedShips = ships.map((s) =>
                 s.name === name ? { ...s, x, y, isVertical, placed: true } : s
             );
-            updateShips(updatedShips); // Update ships via parent
+            setShips(updatedShips);
             return true;
         }
         return false;
-    };
-
-    // Handle cell click
-    const handleCellClick = useCallback((row: string, col: number) => {
-        if (!onCellClick) return;
-
-        const guess = `${col},${rowLabels.indexOf(row)}`;
-        const { hit, sunk, ship } = isShipHit(guess, ships, boardMargin);
-
-        if (hit && ship) {
-            setShips((prevShips) =>
-                prevShips.map((s) =>
-                    s.name === ship.name ? { ...s, hits: new Set(s.hits).add(guess), isSunk: sunk } : s
-                )
-            );
-        }
-
-        onCellClick(row, col, hit);
-    }, [onCellClick, rowLabels, ships]);
+    }, [ships, rows, cols, boardMargin]);
 
     const gridCells = useMemo(() => {
         const cells = [];
@@ -113,13 +109,13 @@ const GameBoard = React.memo(({
                         height={cSize}
                         id={`cell-${cellId}`}
                         className={`board-cell ${playerGuesses.has(`${cellId}`) ? guessResult : ''}`}
-                        onClick={() => handleCellClick(rowLabels[rowIdx], colIdx)}
+                        onClick={() => onCellClick && onCellClick(rowLabels[rowIdx], colIdx)}
                     />
                 );
             }
         }
         return cells;
-    }, [cSize, cols, handleCellClick, playerGuesses, rowLabels, rows]);
+    }, [cSize, cols, onCellClick, playerGuesses, rowLabels, rows]);
 
     return (
         <svg viewBox={`0 0 ${boardSize} ${boardSize}`} className={`game-board ${classes}`}>

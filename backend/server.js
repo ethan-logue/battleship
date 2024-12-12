@@ -5,7 +5,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import { logoutUser } from './api/auth.js';
-import axios from 'axios';
+import { isShipHit } from './utils/logic.js';
 
 dotenv.config();
 
@@ -103,41 +103,103 @@ io.on('connection', (socket) => {
 
     // Handle player ready
     socket.on('playerReady', (gameId, ships) => {
-        const player1 = players.find((p) => p.socketId === socket.id);
+        console.log(`Player ready: ${socket.id}, Ships:`, ships);
 
         if (games[gameId]) {
-            games[gameId].playerReady[player1.id] = true;
-            games[gameId].playerShips[player1.id] = ships;
-            io.to(gameId).emit('updateGameState', games[gameId]);
+            const player = players.find((p) => p.socketId === socket.id);
 
+            games[gameId].playerShips[player.id] = ships;
+            games[gameId].playerReady[player.id] = true;
+
+            console.log(`Updated game state for ${player.username}:`, games[gameId], ships);
+    
+            io.to(gameId).emit('updateGameState', {
+                ...games[gameId],
+                playerReady: { ...games[gameId].playerReady },
+                playerShips: { ...games[gameId].playerShips },
+            });
+    
             // Check if both players are ready
             const allReady = Object.values(games[gameId].playerReady).every((ready) => ready);
             if (allReady) {
+                games[gameId].playersReady = true;
                 io.to(gameId).emit('startGame', games[gameId]);
+            } else {
+                io.to(gameId).emit('updateGameState', games[gameId]);
             }
         }
     });
 
-    // Handle making a move
+    socket.on('opponentReady', (gameId) => {
+        const player = players.find((p) => p.socketId === socket.id);
+    
+        if (games[gameId]) {
+            const opponentId = games[gameId].players.find((id) => id !== player.id);
+            io.to(gameId).emit('opponentReady', games[gameId].playerShips[opponentId]);
+        }
+    });
+
+    // Handle updating ships
+    socket.on('updateShips', (gameId, playerId, ships) => {
+        if (games[gameId]) {
+            games[gameId].playerShips[playerId] = ships;
+    
+            io.to(gameId).emit('updateGameState', {
+                ...games[gameId],
+                playerShips: { ...games[gameId].playerShips },
+            });
+        }
+    });
+
     socket.on('makeMove', (gameId, guess) => {
         if (games[gameId]) {
-            const player1 = players.find((p) => p.socketId === socket.id);
-            const opponentId = games[gameId].players.find((id) => id !== player1.id);
-
-            const { hit, sunk, ship } = isShipHit(guess, games[gameId].playerShips[opponentId], 1);
-
-            io.to(gameId).emit('updateBoard', {
-                playerGuesses: { [player1.id]: guess },
-                opponentGuesses: { [opponentId]: guess },
-                isPlayerTurn: opponentId,
-            });
-
-            if (sunk) {
-                const allSunk = games[gameId].playerShips[opponentId].every((s) => s.isSunk);
-                if (allSunk) {
-                    io.to(gameId).emit('gameOver', player1.id);
-                }
+            const player = players.find((p) => p.socketId === socket.id);
+            const opponentId = games[gameId].players.find((id) => id !== player.id);
+    
+            const opponentShips = games[gameId].playerShips[opponentId];
+            const { hit, sunk, ship } = isShipHit(guess, opponentShips, 1);
+    
+            if (hit && ship) {
+                // Mark the hit on the ship
+                const updatedShips = opponentShips.map((s) =>
+                    s.name === ship.name
+                        ? { ...s, hits: new Set([...s.hits, guess]), isSunk: sunk }
+                        : s
+                );
+                games[gameId].playerShips[opponentId] = updatedShips;
             }
+    
+            // Update guesses
+            if (!games[gameId].playerGuesses) {
+                games[gameId].playerGuesses = {};
+            }
+            if (!games[gameId].opponentGuesses) {
+                games[gameId].opponentGuesses = {};
+            }
+            games[gameId].playerGuesses[player.id] = {
+                ...games[gameId].playerGuesses[player.id],
+                [guess]: hit ? 'hit' : 'miss',
+            };
+            games[gameId].opponentGuesses[opponentId] = {
+                ...games[gameId].opponentGuesses[opponentId],
+                [guess]: hit ? 'hit' : 'miss',
+            };
+    
+            // Check if the game is over
+            if (opponentShips.every((s) => s.isSunk)) {
+                io.to(gameId).emit('gameOver', player.id);
+                delete games[gameId]; // Clean up the game
+                return;
+            }
+    
+            // Switch turns
+            games[gameId].currentTurn = opponentId;
+    
+            io.to(gameId).emit('updateBoard', {
+                playerGuesses: games[gameId].playerGuesses[player.id],
+                opponentGuesses: games[gameId].opponentGuesses[opponentId],
+                isPlayerTurn: games[gameId].currentTurn === player.id,
+            });
         }
     });
 

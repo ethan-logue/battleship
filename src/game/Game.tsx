@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { isShipHit, randomMove } from './GameLogic';
 import { ShipProps } from '../components/Ship';
 import { usePlayer } from '../utils/PlayerContext';
 import { getData } from '../utils/apiUtils';
@@ -14,15 +13,15 @@ const Game = () => {
 	const { player } = usePlayer();
 	const navigate = useNavigate();
 
-	const [hasOpponent, setHasOpponent] = useState<boolean>(false);
-
+	
 	// Initial game setup
 	const numRowsCols = 10;
 	const [cellSize, setCellSize] = useState(calculateCellSize(window.innerWidth));
 	const playerRandomizeShipsRef = useRef<() => void>(() => {});
 	const opponentRandomizeShipsRef = useRef<() => void>(() => {});
-
+	
 	// Game state
+	const [hasOpponent, setHasOpponent] = useState<boolean>(false);
 	const [gameStatus, setGameStatus] = useState('Waiting for both players to ready up...');
 	const [isPlayerTurn, setIsPlayerTurn] = useState(true);
 	const [isPlayerReady, setIsPlayerReady] = useState(false);
@@ -43,6 +42,35 @@ const Game = () => {
 		];
 	}
 
+	// Calculate cell size based on window width
+	function calculateCellSize(width: number) {
+		const padding = 128;
+		const boardWidth = (width - padding) / 2;
+		return Math.round(boardWidth / numRowsCols);
+	};
+
+	// Resize event listener to adjust cell size
+	useEffect(() => {
+		const handleResize = () => {
+			setCellSize(calculateCellSize(window.innerWidth));
+		};
+
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
+
+	// Randomize ships on initial render
+	useEffect(() => {
+		playerRandomizeShipsRef.current();
+		if (!hasOpponent) {
+			opponentRandomizeShipsRef.current();
+		} else {
+			socket.on('opponentReady', (opponentShips) => {
+				setOpponentShips(opponentShips);
+			});
+		}
+	}, [hasOpponent]);
+
 	useEffect(() => {
 		socket.on('hasOpponent', (value) => {
 			console.log('Opponent found:', value);
@@ -50,18 +78,19 @@ const Game = () => {
 		});
 
 		socket.on('updateGameState', (gameState) => {
-			if (player) {
-				setIsPlayerReady(gameState.playerReady[player.socketId]);
-				setIsOpponentReady(gameState.playerReady[gameState.players.find((id: string) => id !== player.socketId)]);
-				setPlayerShips(gameState.playerShips[player.socketId]);
-				setOpponentShips(gameState.playerShips[gameState.players.find((id: string) => id !== player.socketId)]);
-			}
+            if (player) {
+                const opponentId = gameState.players.find((id: number) => id !== player.id);
+                setIsPlayerReady(gameState.playerReady[player.id]);
+                setIsOpponentReady(gameState.playerReady[opponentId]);
+                setPlayerShips(gameState[`player${player.id}_ships`]);
+                setOpponentShips(gameState[`player${opponentId}_ships`]);
+            }
         });
 
 		socket.on('startGame', (gameState) => {
 			if (player) {
-				setGameStatus(gameState.currentTurn === player.socketId ? 'Game started! Your turn.' : 'Game started! Opponent\'s turn.');
-				setIsPlayerTurn(gameState.currentTurn === player.socketId);
+				setGameStatus(gameState.currentTurn === player.id ? 'Game started! Your turn.' : 'Game started! Opponent\'s turn.');
+				setIsPlayerTurn(gameState.currentTurn === player.id);
 			}
 		});
 
@@ -87,101 +116,124 @@ const Game = () => {
         };
 	}, [gameId, player]);
 
-	// Calculate cell size based on window width
-	function calculateCellSize(width: number) {
-		const padding = 128;
-		const boardWidth = (width - padding) / 2;
-		return Math.round(boardWidth / numRowsCols);
-	};
-
-	// Resize event listener to adjust cell size
-	useEffect(() => {
-		const handleResize = () => {
-			setCellSize(calculateCellSize(window.innerWidth));
-		};
-
-		window.addEventListener('resize', handleResize);
-		return () => window.removeEventListener('resize', handleResize);
-	}, []);
-
-	// Randomize ships on initial render
-	useEffect(() => {
-		playerRandomizeShipsRef.current();
-		opponentRandomizeShipsRef.current();
-	}, []);
-
 	const handleReadyUp = async () => {
-        setIsPlayerReady(!isPlayerReady);
-		socket.emit('playerReady', gameId, playerShips);
+		const newPlayerReady = !isPlayerReady;
+		setIsPlayerReady(newPlayerReady);
 
+		socket.emit('updateShips', gameId, player?.id, playerShips);
+
+		if (hasOpponent) {
+			socket.emit('playerReady', gameId, playerShips);
+		} else {
+			setIsOpponentReady(true); // Single-player mode auto-readies opponent
+			if (!isPlayerTurn) setIsPlayerTurn(true);
+			setGameStatus('Your turn!');
+		}
+		
 		try {
 			if (player) {
-				await getData(`/game/${gameId}/update`, 'POST', {
-					playerReady: { [player.id]: !isPlayerReady },
+				const playersReady = newPlayerReady && isOpponentReady;
+				const response = await getData(`/game/${gameId}/update`, 'POST', {
 					playerShips: { [player.id]: playerShips },
+					playerGuesses: Object.fromEntries(playerGuesses),
+					opponentGuesses: Object.fromEntries(opponentGuesses),
+					currentTurn: isPlayerTurn ? player.id : null,
+					playersReady,
 				});
+
+				console.log('Game state response:', response);
+				const { gameState } = response;
+
+				if (!gameState?.players || !Array.isArray(gameState.players)) {
+					throw new Error('Invalid game state: players array is missing.');
+				}
+
+				const opponentId = gameState.players.find((id: number) => id !== player.id);
+				setIsOpponentReady(gameState.playerReady[opponentId]);
+	
+				if (gameState.playersReady) {
+					setOpponentShips(gameState[`player${opponentId === gameState.player1_ID ? 'player1_ships' : 'player2_ships'}`]);
+					setPlayerGuesses(new Map(gameState[`player${player.id === gameState.player1_ID ? 'player1_guesses' : 'player2_guesses'}`]));
+					setOpponentGuesses(new Map(gameState[`player${opponentId === gameState.player1_ID ? 'player1_guesses' : 'player2_guesses'}`]));
+					setIsPlayerTurn(gameState.currentTurn === player.id);
+					setGameStatus('Both players are ready! Starting the game...');
+				} else {
+					setGameStatus('Waiting for opponent to ready up...');
+				}
 			}
 		} catch (error) {
 			console.error('Error updating game state:', error);
 		}
-
-        if (!hasOpponent) {
-            setIsOpponentReady(true); // Single-player mode auto-readies opponent
-			if (!isPlayerTurn) setIsPlayerTurn(true); // Player goes first in single-player mode
-			setGameStatus('Your turn!');
-        } else if (isPlayerReady && isOpponentReady) {
-			// Both players are ready, start the game
-			setGameStatus('Waiting for opponent to ready up...');
-		}
-    };
+	};
 
 	// Handle player's click on the opponent's board
-	const handleCellClick = async (row: string, col: number, hit: boolean) => {
+	const handleCellClick = async (row: string, col: number) => {
 		const guess = `${row}${col}`;
-
+	
 		if (isPlayerTurn && !playerGuesses.has(guess)) {
-			const newGuesses = new Map(playerGuesses);
-			newGuesses.set(guess, hit ? 'hit' : 'miss');
-			setPlayerGuesses(newGuesses);
-
-			setIsPlayerTurn(false);
-			setGameStatus('Opponent\'s turn...');
-			socket.emit('makeMove', gameId, guess);
+			try {
+				const response = await getData(`/game/${gameId}/guess`, 'POST', {
+					playerId: player?.id,
+					guess,
+				});
+	
+				const { hit, sunk, ship } = response;
+				const newGuesses = new Map(playerGuesses);
+				newGuesses.set(guess, hit ? 'hit' : 'miss');
+				setPlayerGuesses(newGuesses);
+	
+				if (hit && ship) {
+					setOpponentShips((prevShips) =>
+						prevShips.map((s) =>
+							s.name === ship.name ? { ...s, hits: new Set(s.hits).add(guess), isSunk: sunk } : s
+						)
+					);
+				}
+	
+				setIsPlayerTurn(false);
+				setGameStatus('Opponent\'s turn...');
+				socket.emit('makeMove', gameId, guess);
+	
+				// Handle single-player mode
+				if (!hasOpponent) {
+					makeRandomMove();
+				}
+			} catch (error) {
+				console.error('Error making move:', error);
+			}
 		}
-    };
+	};
 
 	// Handle opponent's random move
-    useEffect(() => {
-        if (!isPlayerTurn && !hasOpponent) {
-            const timeout = setTimeout(() => {
-                const randomGuess = randomMove(numRowsCols, opponentGuesses);
-                if (!randomGuess) return;
+    const makeRandomMove = () => {
+		setTimeout(async () => {
+			try {
+				const response = await getData(`/game/${gameId}/computerMove`, 'POST', {});
+				const { randomGuess, hit, sunk, ship } = response;
 
-                const { hit, sunk, ship } = isShipHit(randomGuess, playerShips, 1);
+				// Update opponent's guesses
+				const newGuesses = new Map(opponentGuesses);
+				newGuesses.set(randomGuess, hit ? 'hit' : 'miss');
+				setOpponentGuesses(newGuesses);
 
-                // Update opponent's guesses
-                const newGuesses = new Map(opponentGuesses);
-                newGuesses.set(randomGuess, hit ? 'hit' : 'miss');
-                setOpponentGuesses(newGuesses);
+				console.log('Opponent guessed:', randomGuess, hit ? 'hit' : 'miss');
 
-                console.log('Opponent guessed:', randomGuess, hit ? 'hit' : 'miss');
+				// Update player's ships if hit
+				if (hit && ship) {
+					setPlayerShips((prevShips) =>
+						prevShips.map((s) =>
+							s.name === ship.name ? { ...s, hits: new Set(s.hits).add(randomGuess), isSunk: sunk } : s
+						)
+					);
+				}
 
-                // Update player's ships if hit
-                if (hit && ship) {
-                    setPlayerShips((prevShips) =>
-                        prevShips.map((s) =>
-                            s.name === ship.name ? { ...s, hits: new Set(s.hits).add(randomGuess), isSunk: sunk } : s
-                        )
-                    );
-                }
-
-                setIsPlayerTurn(true);
-                setGameStatus('Your turn!');
-            }, 500);
-
-            return () => clearTimeout(timeout);
-        }
-    }, [hasOpponent, isPlayerTurn, opponentGuesses, playerShips]);
+				setIsPlayerTurn(true);
+				setGameStatus('Your turn!');
+			} catch (error) {
+				console.error('Error making computer move:', error);
+			}
+		}, 500);
+    };
 
 	const handleQuit = async () => {
         try {
@@ -214,8 +266,8 @@ const Game = () => {
 						playerGuesses={opponentGuesses}
 						playerReady={isPlayerReady}
 						updateShips={setPlayerShips}
+						gameId={gameId}
 					/>
-
 					
 					<div className='game-btns'>
 						<button onClick={handleQuit}>Quit Game</button>
@@ -238,6 +290,7 @@ const Game = () => {
 						updateShips={setOpponentShips}
 						onCellClick={handleCellClick}
 						classes={`opponent-board ${!isPlayerTurn || !isPlayerReady ? 'disabled' : ''}`}
+						gameId={gameId}
 					/>
 				</div>
 			</div>

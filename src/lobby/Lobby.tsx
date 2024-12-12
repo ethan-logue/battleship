@@ -45,7 +45,6 @@ const Lobby = () => {
     }, [navigate]);
     
     const sendChallenge = (opponentId: number) => {
-        console.log('Sending challenge to:', opponentId);
         socket.emit('sendChallenge', opponentId);
         setChallengeSent(opponentId);
     };
@@ -53,8 +52,6 @@ const Lobby = () => {
     const handleAcceptChallenge = async () => {
         if (challenger && player) {
             const gameId = `${player.socketId}-${challenger.socketId}`;
-            console.log('Accepting challenge WITH GAMEID:', challenger, player, gameId);
-            
             try {
                 await getData('/game/create', 'POST', { player1_ID: challenger.id, player2_ID: player.id, gameId });
                 socket.emit('acceptChallenge', challenger.socketId, gameId);

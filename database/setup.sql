@@ -36,10 +36,11 @@ CREATE TABLE Game (
     current_turn INT,
     winner_ID INT,
     game_status VARCHAR(50),
-    player_ships JSON,
-    opponent_ships JSON,
-    player_guesses JSON,
-    opponent_guesses JSON,
+    players_ready BOOLEAN DEFAULT FALSE,
+    player1_ships JSON,
+    player2_ships JSON,
+    player1_guesses JSON,
+    player2_guesses JSON,
     FOREIGN KEY (player1_ID) REFERENCES Player(player_ID),
     FOREIGN KEY (player2_ID) REFERENCES Player(player_ID)
 );
@@ -47,9 +48,11 @@ CREATE TABLE Game (
 CREATE TABLE Move (
     move_ID INT AUTO_INCREMENT PRIMARY KEY,
     game_ID VARCHAR(100),
+    player_ID INT,
     target_position VARCHAR(5),
     is_hit BOOLEAN,
-    FOREIGN KEY (game_ID) REFERENCES Game(game_ID)
+    FOREIGN KEY (game_ID) REFERENCES Game(game_ID),
+    FOREIGN KEY (player_ID) REFERENCES Player(player_ID)
 );
 
 CREATE TABLE GameBoard (

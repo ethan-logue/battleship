@@ -18,29 +18,28 @@ const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip, isSunk, p
     const [dragging, setDragging] = useState(false);
     const [previewPosition, setPreviewPosition] = useState({ x, y });
     const [isPreviewValid, setIsPreviewValid] = useState(true);
-    const [lastValidPosition, setLastValidPosition] = useState({ x, y });
 
     const nodeRef = useRef(null); // For Draggable, dismisses warning about findDOMNode being deprecated
 
     const handleDragStart = () => {
-        setLastValidPosition({ x: x, y: y });
         setDragging(true);
+        setPreviewPosition({ x, y });
     };
 
     const handleDrag = (_e: DraggableEvent, data: DraggableData) => {
         const snappedX = Math.round(data.x / cellSize);
         const snappedY = Math.round(data.y / cellSize);
+        
         setPreviewPosition({ x: snappedX, y: snappedY });
-
-        const valid = onPlaceShip(name, snappedX, snappedY, isVertical);
-        setIsPreviewValid(valid);
+        const isValid = onPlaceShip(name, snappedX, snappedY, isVertical);
+        setIsPreviewValid(isValid);
     };
 
     const handleDragStop = () => {
         if (isPreviewValid) {
             onPlaceShip(name, previewPosition.x, previewPosition.y, isVertical);
         } else {
-            onPlaceShip(name, lastValidPosition.x, lastValidPosition.y, isVertical); // Revert to original position
+            onPlaceShip(name, x, y, isVertical); // Revert to original position
         }
         setDragging(false);
     };
@@ -67,14 +66,14 @@ const Ship = ({ name, length, x, y, isVertical, cellSize, onPlaceShip, isSunk, p
         e.preventDefault();
         const newOrientation = !isVertical;
 
-        const valid = onPlaceShip(name, previewPosition.x, previewPosition.y, newOrientation);
-        if (valid) {
+        const isValid = onPlaceShip(name, previewPosition.x, previewPosition.y, newOrientation);
+        if (isValid) {
             onPlaceShip(name, previewPosition.x, previewPosition.y, newOrientation);
         } else {
             // Turn ship red and shake
             shakeShip();
         }
-    }, [dragging, isVertical, onPlaceShip, name, previewPosition.x, previewPosition.y, shakeShip]);
+    }, [dragging, isVertical, onPlaceShip, name, previewPosition, shakeShip]);
    
     // Add event listener for rotation
     useEffect(() => {
