@@ -20,7 +20,6 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3000;
-const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
 app.use(cors({
     origin: "http://localhost:5173",
@@ -67,6 +66,13 @@ io.on('connection', (socket) => {
         const challenger = players.find((p) => p.id === opponentId);
         console.log(`Challenge sent from ${socket.id} to ${challenger.socketId}`);
         io.to(challenger.socketId).emit('challengeReceived', socket.id, players.find((p) => p.socketId === socket.id));
+    });
+
+    // Handle challenge rejection
+    socket.on('rejectChallenge', (challengerSocketId) => {
+        const challenger = players.find((p) => p.socketId === challengerSocketId);
+        console.log(`Challenge rejected by ${socket.id} to ${challenger.socketId}`);
+        io.to(challengerSocketId).emit('challengeRejected', socket.id);
     });
 
     // Handle challenge acceptance

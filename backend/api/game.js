@@ -1,6 +1,7 @@
 import express from 'express';
 import connection from '../connection.js';
 import authenticateToken from '../utils/authToken.js';
+import { getOccupiedCells, randomMove } from '../utils/logic.js';
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.get('/:gameId', authenticateToken, (req, res) => {
 // Update game state
 router.post('/:gameId/update', authenticateToken, (req, res) => {
     const { gameId } = req.params;
-    const { playerShips, playerGuesses, opponentGuesses, currentTurn, playersReady } = req.body;
+    const { player1Ships, player2Ships, playerGuesses, opponentGuesses, currentTurn, playersReady } = req.body;
 
     // Fetch player IDs from the Game table
     const fetchPlayersQuery = 'SELECT player1_ID, player2_ID, player1_ships, player2_ships FROM Game WHERE game_ID = ?';
@@ -31,27 +32,28 @@ router.post('/:gameId/update', authenticateToken, (req, res) => {
         }
 
         const game = results[0];
-        const player1Ships = JSON.stringify(playerShips[game.player1_ID] || JSON.parse(game.player1_ships) || null);
-        const player2Ships = JSON.stringify(playerShips[game.player2_ID] || JSON.parse(game.player2_ships) || null);
+        const updatedPlayer1Ships = player1Ships || game.player1_ships;
+        const updatedPlayer2Ships = player2Ships || game.player2_ships;
 
         const updateQuery = `
             UPDATE Game SET 
-                player1_ships = COALESCE(?, player1_ships),
-                player2_ships = COALESCE(?, player2_ships),
-                player1_guesses = ?,
-                player2_guesses = ?,
-                current_turn = ?,
+                player1_ships = ?, 
+                player2_ships = ?, 
+                player1_guesses = ?, 
+                player2_guesses = ?, 
+                current_turn = ?, 
                 players_ready = ?
-            WHERE game_ID = ?`;
+            WHERE game_ID = ?
+        `;
 
         const updateValues = [
-            player1Ships,
-            player2Ships,
-            JSON.stringify(playerGuesses),
-            JSON.stringify(opponentGuesses),
+            JSON.stringify(updatedPlayer1Ships),
+            JSON.stringify(updatedPlayer2Ships),
+            JSON.stringify(playerGuesses || {}),
+            JSON.stringify(opponentGuesses || {}),
             currentTurn,
             playersReady,
-            gameId
+            gameId,
         ];
 
         connection.query(updateQuery, updateValues, (updateErr) => {
@@ -60,10 +62,18 @@ router.post('/:gameId/update', authenticateToken, (req, res) => {
                 return res.status(500).json({ error: 'Database update error' });
             }
 
-            const players = [game.player1_ID, game.player2_ID];
             res.json({
                 message: 'Game state updated',
-                gameState: { playerShips, playerGuesses, opponentGuesses, currentTurn, playersReady, players },
+                gameState: {
+                    player1Ships: updatedPlayer1Ships,
+                    player2Ships: updatedPlayer2Ships,
+                    playerGuesses,
+                    opponentGuesses,
+                    currentTurn,
+                    playersReady,
+                    player1_ID: game.player1_ID,
+                    player2_ID: game.player2_ID,
+                },
             });
         });
     });

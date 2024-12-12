@@ -1,6 +1,6 @@
 .game-board {
     width: 100%;
-    background-color: #f0f8ff;
+    background-color: var(--primary);
     border: 2px solid #000;
     border-radius: 8px;
     user-select: none;
@@ -9,13 +9,13 @@
 .board-label {
     font-size: 1rem;
     font-family: Arial, sans-serif;
-    fill: #000;
-    font-weight: bold;
+    fill: var(--accent);
+    font-weight: 600;
 }
 
 .board-cell {
-    fill: #ffffff;
-    stroke: #000;
+    fill: var(--accent);
+    stroke: var(--primary);
     stroke-width: 1px;
     transition: fill 0.2s;
 }

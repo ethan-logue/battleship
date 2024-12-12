@@ -1,0 +1,102 @@
+.lobby-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 1rem;
+}
+
+.lobby-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+    width: 100%;
+    color: var(--secondary);
+    background: #12252bd9;
+    box-shadow: 0px 5px 12px 0px rgb(0 0 0 / 50%);
+}
+
+.lobby-header .left,
+.lobby-header .right {
+    flex: 1;
+}
+
+.lobby-header h1 {
+    flex-grow: 2;
+    text-align: center;
+    color: var(--accent);
+}
+
+.lobby-header .right {
+    text-align: right;
+}
+
+.logout-btn {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 0.2rem;
+}
+
+.lobby-username {
+    font-weight: 500;
+}
+
+.lobby-body {
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.player-container {
+    padding: 1rem;
+    background: #12252bd9;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    box-shadow: 0px 5px 12px 0px rgb(0 0 0 / 50%);
+}
+
+.player-container h2 {
+    color: var(--secondary);
+    margin-bottom: 1rem;
+}
+
+.player-list {
+    list-style: none;
+    color: var(--accent);
+}
+
+.player {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0.5rem 0;
+}
+
+.challenge-btn {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.play-btn {
+    padding: 0.5rem 1rem;
+    width: fit-content;
+    border-radius: 4px;
+    margin-left: 1rem;
+}
+
+.challenge-btn:hover,
+.play-btn:hover {
+    background: var(--accent);
+}
+
+.challenge-btn:disabled {
+    filter: brightness(0.5);
+    cursor: not-allowed;
+}
+
+.challenge-btn:disabled:hover {
+    background: var(--secondary);
+}

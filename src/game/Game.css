@@ -13,6 +13,15 @@
 	text-align: center;
 }
 
+.game-status-container h2 {
+	color: var(--accent);
+	margin-bottom: 0.5rem;
+}
+
+.game-status {
+	color: var(--secondary);
+}
+
 .game-boards {
 	display: flex;
 	justify-content: center;
@@ -32,10 +41,24 @@
 	max-width: 650px;
 }
 
+.game-board-container h3 {
+	color: var(--secondary);
+	margin-bottom: 0.5rem;
+}
+
 .game-btns {
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	gap: 1rem;
 	margin-top: 1rem;
+}
+
+.game-btns button {
+	padding: 0.5rem 1rem;
+	border-radius: 4px;
+}
+
+.game-btns button:hover {
+	background-color: var(--accent);
 }

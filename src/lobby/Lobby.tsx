@@ -5,6 +5,7 @@ import { getData } from '../utils/apiUtils';
 import ChallengePopup from '../components/ChallengePopup';
 import Chat from '../components/Chat';
 import socket from '../utils/socket';
+import './Lobby.css';
 
 
 const Lobby = () => {
@@ -36,6 +37,10 @@ const Lobby = () => {
         socket.on('challengeAccepted', (gameId: string) => {
             navigate(`/game/${gameId}`);
         });
+
+        socket.on('challengeRejected', () => {
+            setChallengeSent(null);
+        });
         
         return () => {
             socket.off('updateLobbyPlayers');
@@ -64,7 +69,10 @@ const Lobby = () => {
     };
 
     const handleRejectChallenge = () => {
-        setChallenger(null);
+        if (challenger) {
+            socket.emit('rejectChallenge', challenger.socketId);
+            setChallenger(null);
+        }
     };
 
     // Create single player game
@@ -93,23 +101,32 @@ const Lobby = () => {
 
     return (
         <div className="lobby-container">
-            <button onClick={handleLogout}>Log out</button>
-            <h1>Lobby</h1>
-            <ul>
-                {players.filter(p => !p.currentGameId).map((p) => (
-                    <li key={p.id}>
-                        {p.username}
-                        {player?.id !== p.id && (
-                            challengeSent === p.id ? (
-                                <button disabled>Challenge Sent</button>
-                            ) : (
-                                <button onClick={() => sendChallenge(p.id)}>Challenge</button>
-                            )
-                        )}
-                    </li>
-                ))}
-            </ul>
-            <button onClick={initGame}>Play</button>
+            <div className='lobby-header'>
+                <div className='left'><div className='lobby-username'>Welcome, {player?.username}</div></div>
+                <h1>Lobby</h1>
+                <div className='right'><button className='btn-underline logout-btn' onClick={handleLogout}>Log out</button></div>
+            </div>
+
+            <div className='lobby-body'>
+                <div className='player-container'>
+                    <h2>Players</h2>
+                    <ul className='player-list'>
+                        {players.filter(p => !p.currentGameId).map((p) => (
+                            <li className='player' key={p.id}>
+                                {p.username}
+                                {player?.id !== p.id && (
+                                    challengeSent === p.id ? (
+                                        <button className='challenge-btn' disabled>Challenge Sent</button>
+                                    ) : (
+                                        <button className='challenge-btn' onClick={() => sendChallenge(p.id)}>Challenge</button>
+                                    )
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+                <button className='play-btn' onClick={initGame}>Play Solo</button>
+            </div>
             <Chat socket={socket} room="lobby" />
             {challenger && (
                 <ChallengePopup

@@ -78,7 +78,7 @@ const Auth = () => {
                         <AuthFormGroup name='password' type='password' onChange={handleInputChange} />
 
                         <div className='auth-btns'>
-                            <button className='auth-toggle' onClick={toggleForm}>
+                            <button className='btn-underline' onClick={toggleForm}>
                                 {isRegister ? 'Returning User? Login' : 'New User? Register Here'}
                             </button>
                             <button className='auth-submit' type="submit">{isRegister ? 'Register' : 'Login'}</button>

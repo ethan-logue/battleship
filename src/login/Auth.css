@@ -62,6 +62,15 @@
     margin-bottom: 1.5rem;
 }
 
+.auth-heading:has(+ p) {
+    margin-bottom: 0.5rem;
+}
+
+.auth-heading + p {
+    margin-bottom: 0.5rem;
+    color: var(--accent);
+}
+
 .auth-form {
     display: flex;
     flex-direction: column;
@@ -76,42 +85,6 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 1rem;
-    
-    button {
-        appearance: none;
-        border: none;
-        
-        &:hover {
-            cursor: pointer;
-        }
-    }
-}
-
-.auth-toggle {
-    color: var(--secondary);
-    background: none;
-    position: relative;
-    padding-bottom: 0.2rem;
-
-    &::after {
-        position: absolute;
-        content: '';
-        height: 1px;
-        width: 100%;
-        transform: scaleX(0);
-        bottom: 0;
-        left: 0;
-        background: var(--secondary);
-        transition: transform 0.3s ease-in-out;
-        transform-origin: bottom right;
-    }
-    
-    &:hover {
-        &::after {
-            transform: scaleX(1);
-            transform-origin: bottom left;
-        }
-    }
 }
 
 .auth-submit {
@@ -121,12 +94,12 @@
     border-radius: 0.25rem;
     font-size: 1rem;
     font-weight: 600;
-    background-image: linear-gradient(to top, var(--accent) 50%, transparent 50%);
-    background-position: top;
+    background-image: linear-gradient(to bottom, var(--accent) 50%, transparent 50%);
+    background-position: bottom;
     background-size: 100% 200%;
     transition: background-position 0.15s ease-out;
 
     &:hover {
-        background-position: bottom;
+        background-position: top;
     }
 }

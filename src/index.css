@@ -3,6 +3,7 @@
 	--primary: #12252b;
 	--secondary: #508497;
 	--accent: #8db5c3;
+	--ship: #2f3335;
 }
 
 * {
@@ -10,4 +11,42 @@
 	box-sizing: border-box;
 	margin: 0;
 	padding: 0;
+}
+
+button {
+	appearance: none;
+	border: none;
+	outline: none;
+	background-color: var(--secondary);
+    color: var(--primary);
+	font-weight: 600;
+	transition: all 0.2s ease-in-out;
+	cursor: pointer;
+}
+
+.btn-underline {
+	color: var(--secondary);
+	background: none;
+	position: relative;
+	padding-bottom: 0.2rem;
+
+	&::after {
+		position: absolute;
+		content: '';
+		height: 1px;
+		width: 100%;
+		transform: scaleX(0);
+		bottom: 0;
+		left: 0;
+		background: var(--secondary);
+		transition: transform 0.3s ease-in-out;
+		transform-origin: bottom right;
+	}
+	
+	&:hover {
+		&::after {
+			transform: scaleX(1);
+			transform-origin: bottom left;
+		}
+	}
 }

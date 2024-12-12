@@ -134,7 +134,8 @@ const Game = () => {
 			if (player) {
 				const playersReady = newPlayerReady && isOpponentReady;
 				const response = await getData(`/game/${gameId}/update`, 'POST', {
-					playerShips: { [player.id]: playerShips },
+					player1Ships: player.id === 1 ? playerShips : undefined,
+                	player2Ships: player.id === 2 ? playerShips : undefined,
 					playerGuesses: Object.fromEntries(playerGuesses),
 					opponentGuesses: Object.fromEntries(opponentGuesses),
 					currentTurn: isPlayerTurn ? player.id : null,
@@ -144,18 +145,14 @@ const Game = () => {
 				console.log('Game state response:', response);
 				const { gameState } = response;
 
-				if (!gameState?.players || !Array.isArray(gameState.players)) {
-					throw new Error('Invalid game state: players array is missing.');
-				}
-
-				const opponentId = gameState.players.find((id: number) => id !== player.id);
-				setIsOpponentReady(gameState.playerReady[opponentId]);
+				const isPlayer1 = player.id === gameState.player1_ID;
+				setIsOpponentReady(isPlayer1 ? gameState.playerReady[gameState.player2_ID] : gameState.playerReady[gameState.player1_ID]);
 	
 				if (gameState.playersReady) {
-					setOpponentShips(gameState[`player${opponentId === gameState.player1_ID ? 'player1_ships' : 'player2_ships'}`]);
-					setPlayerGuesses(new Map(gameState[`player${player.id === gameState.player1_ID ? 'player1_guesses' : 'player2_guesses'}`]));
-					setOpponentGuesses(new Map(gameState[`player${opponentId === gameState.player1_ID ? 'player1_guesses' : 'player2_guesses'}`]));
-					setIsPlayerTurn(gameState.currentTurn === player.id);
+					setOpponentShips(isPlayer1 ? gameState.player2Ships : gameState.player1Ships);
+					setPlayerGuesses(new Map(isPlayer1 ? gameState.player1Guesses : gameState.player2Guesses));
+					setOpponentGuesses(new Map(isPlayer1 ? gameState.player2Guesses : gameState.player1Guesses));
+					setIsPlayerTurn(gameState.currentTurn);
 					setGameStatus('Both players are ready! Starting the game...');
 				} else {
 					setGameStatus('Waiting for opponent to ready up...');
@@ -249,15 +246,15 @@ const Game = () => {
 		<div className="game-container">
 
 			<div className='game-header'>
-				<div className='game-status'>
+				<div className='game-status-container'>
 					<h2>Game Status</h2>
-					<p id='game-status'>{gameStatus}</p>
+					<p className='game-status'>{gameStatus}</p>
 				</div>
 			</div>
 
 			<div className='game-boards'>
 				<div className='game-board-container'>
-					<h2>Your Board</h2>
+					<h3>Your Board</h3>
 					<GameBoard
 						cellSize={cellSize}
 						numRowsCols={numRowsCols}
@@ -266,7 +263,6 @@ const Game = () => {
 						playerGuesses={opponentGuesses}
 						playerReady={isPlayerReady}
 						updateShips={setPlayerShips}
-						gameId={gameId}
 					/>
 					
 					<div className='game-btns'>
@@ -280,7 +276,7 @@ const Game = () => {
 					</div>
 				</div>
 				<div className={`game-board-container`}>
-					<h2>Opponent's Board</h2>
+					<h3>Opponent's Board</h3>
 					<GameBoard
 						cellSize={cellSize} 
 						numRowsCols={numRowsCols}
@@ -290,7 +286,6 @@ const Game = () => {
 						updateShips={setOpponentShips}
 						onCellClick={handleCellClick}
 						classes={`opponent-board ${!isPlayerTurn || !isPlayerReady ? 'disabled' : ''}`}
-						gameId={gameId}
 					/>
 				</div>
 			</div>
